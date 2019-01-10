@@ -124,7 +124,7 @@ public class BlackjackGame {
 
 
         int dealersSlot = 11;
-        if(false) {
+        if(hideHouse) {
             for (String card : houseCards) {
                 if (dealersSlot == 11) {
                     inventory.setItem(dealersSlot, cardAsItemStack(card, true));

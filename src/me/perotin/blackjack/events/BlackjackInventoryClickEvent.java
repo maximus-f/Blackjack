@@ -38,7 +38,7 @@ public class BlackjackInventoryClickEvent implements Listener {
                         builder.type(Material.GREEN_STAINED_GLASS_PANE);
                         builder.name(ChatColor.YELLOW + BlackjackGame.convertToFullText(houseCards.get(houseIndex)));
                         houseIndex++;
-                        if(houseIndex == houseCards.size() - 1){
+                        if(houseIndex >= houseCards.size() - 1){
                             houseIndex = 1;
                         }
                         clicked.setItem(x, builder.build());
@@ -50,6 +50,7 @@ public class BlackjackInventoryClickEvent implements Listener {
                 }
             }.runTaskLater(plugin, 20);
         }
+
 
 
     @EventHandler
@@ -72,7 +73,6 @@ public class BlackjackInventoryClickEvent implements Listener {
 
                 }
             }
-
 
             if (currentGame != null) {
                 event.setCancelled(true);

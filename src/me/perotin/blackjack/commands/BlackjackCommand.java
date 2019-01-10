@@ -2,10 +2,14 @@ package me.perotin.blackjack.commands;
 
 import me.perotin.blackjack.Blackjack;
 import me.perotin.blackjack.objects.BlackjackGame;
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitRunnable;
+
+import java.util.stream.IntStream;
 
 /* Created by Perotin on 12/27/18 */
 public class BlackjackCommand implements CommandExecutor {
@@ -34,13 +38,49 @@ public class BlackjackCommand implements CommandExecutor {
                         return true;
                     }
 
+                    // search up if they already have an on-going game
+                    boolean noOtherGames = true;
+                    for(BlackjackGame game : plugin.getCurrentGames()){
+                        if(game.getPlayer().getUniqueId().equals(player.getUniqueId())){
+                            // they have an ongoing game
+                            noOtherGames = false;
+                            player.sendMessage(ChatColor.GRAY + "Opening previous game. . .");
+                            new BukkitRunnable(){
+                                @Override
+                                public void run(){
+                                    player.openInventory(game.getInventory(true));
+                                    IntStream.range(0, 25).forEach(i -> player.sendMessage(""));
 
-                    BlackjackGame game = new BlackjackGame(player, betAmount);
-                    plugin.getCurrentGames().add(game);
-                    player.openInventory(game.getInventory(true));
+                                }
+                            }.runTaskLater(plugin, 60);
+                        }
+                    }
+                    if(noOtherGames) {
+                        BlackjackGame game = new BlackjackGame(player, betAmount);
+                        plugin.getCurrentGames().add(game);
+                        player.openInventory(game.getInventory(true));
+                    }
 
                 } else {
-                    player.sendMessage(plugin.getString("incorrect-args"));
+                    boolean noOtherGames = true;
+                    for(BlackjackGame game : plugin.getCurrentGames()){
+                        if(game.getPlayer().getUniqueId().equals(player.getUniqueId())){
+                            // they have an ongoing game
+                            noOtherGames = false;
+                            player.sendMessage(ChatColor.GRAY + "Opening previous game. . .");
+                            new BukkitRunnable(){
+                                @Override
+                                public void run(){
+                                    player.openInventory(game.getInventory(true));
+                                    IntStream.range(0, 25).forEach(i -> player.sendMessage(""));
+
+                                }
+                            }.runTaskLater(plugin, 60);
+                        }
+                    }
+                    if(noOtherGames) {
+                        player.sendMessage(plugin.getString("incorrect-args"));
+                    }
                     return true;
                 }
             } else {
