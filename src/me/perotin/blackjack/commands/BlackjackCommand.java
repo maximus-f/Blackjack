@@ -55,7 +55,24 @@ public class BlackjackCommand implements CommandExecutor {
                             }.runTaskLater(plugin, 60);
                         }
                     }
+                    if(plugin.isOverflow()) {
+                        int overflowAmount = plugin.getConfig().getInt("bet-overflow-max");
+                        if(betAmount > Blackjack.getEconomy().getBalance(player) + overflowAmount){
+                            // too much
+                            player.sendMessage(plugin.getString("can-only-bet")
+                            .replace("$amount$", overflowAmount+""));
+                            return true;
+                        }
+
+                    } else {
+                        if(betAmount > Blackjack.getEconomy().getBalance(player)){
+                            // can't
+                            player.sendMessage(plugin.getString("cannot-bet-that-much"));
+                            return true;
+                        }
+                    }
                     if(noOtherGames) {
+
                         BlackjackGame game = new BlackjackGame(player, betAmount);
                         plugin.getCurrentGames().add(game);
                         player.openInventory(game.getInventory(true));

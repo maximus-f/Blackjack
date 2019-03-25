@@ -2,6 +2,7 @@ package me.perotin.blackjack.objects;
 
 import me.perotin.blackjack.Blackjack;
 import me.perotin.blackjack.util.ItemBuilder;
+import me.perotin.blackjack.util.XMaterial;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -97,22 +98,25 @@ public class BlackjackGame {
     public Inventory getInventory(boolean hideHouse){
         Blackjack plugin = Blackjack.getInstance();
         Inventory inventory = Bukkit.createInventory(null, 54, Blackjack.getInstance().getString("menu-title").replace("$number$", ""+betAmount));
-        ItemBuilder dealer = new ItemBuilder(Material.BLACK_STAINED_GLASS_PANE);
+        ItemBuilder tutorial = new ItemBuilder(XMaterial.PAPER.parseItem());
+        tutorial.name(plugin.getString("tutorial-name"));
+        inventory.setItem(0, tutorial.build());
+        ItemBuilder dealer = new ItemBuilder(XMaterial.BLACK_STAINED_GLASS_PANE.parseItem());
         dealer.name(Blackjack.getInstance().getString("blackjack-dealer"));
         dealer.lore(Blackjack.getInstance().getString("dealer-lore"));
         inventory.setItem(4, dealer.build());
 
-        ItemBuilder sign = new ItemBuilder(Material.SIGN);
+        ItemBuilder sign = new ItemBuilder(XMaterial.SIGN.parseItem());
         sign.name(plugin.getString("dealer-cards"));
         inventory.setItem(9, sign.build());
-        sign.name(plugin.getString("player-cards"));
+        sign.name(plugin.getString("player-cards") +" " + getScoreUnder21(playerCards));
         inventory.setItem(36, sign.build());
 
-        ItemBuilder hit = new ItemBuilder(Material.MAP);
+        ItemBuilder hit = new ItemBuilder(XMaterial.MAP.parseItem());
         hit.name(Blackjack.getInstance().getString("hit-item"));
         inventory.setItem(22, hit.build());
 
-        ItemBuilder stand = new ItemBuilder(Material.BARRIER);
+        ItemBuilder stand = new ItemBuilder(XMaterial.BARRIER.parseItem());
         stand.name(Blackjack.getInstance().getString("stand-item"));
         inventory.setItem(31, stand.build());
 
@@ -147,11 +151,11 @@ return inventory;
 
     private ItemStack cardAsItemStack(String card, boolean show){
         if(show) {
-            ItemBuilder builder = new ItemBuilder(Material.GREEN_STAINED_GLASS_PANE);
+            ItemBuilder builder = new ItemBuilder(XMaterial.GREEN_STAINED_GLASS_PANE.parseItem());
             builder.name(ChatColor.YELLOW + convertToFullText(card));
             return builder.build();
         } else {
-            ItemBuilder build = new ItemBuilder(Material.RED_STAINED_GLASS_PANE);
+            ItemBuilder build = new ItemBuilder(XMaterial.RED_STAINED_GLASS_PANE.parseItem());
             build.name(Blackjack.getInstance().getString("unknown-card"));
             return build.build();
         }

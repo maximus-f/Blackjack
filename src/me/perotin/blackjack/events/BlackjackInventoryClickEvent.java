@@ -3,18 +3,19 @@ package me.perotin.blackjack.events;
 import me.perotin.blackjack.Blackjack;
 import me.perotin.blackjack.objects.BlackjackGame;
 import me.perotin.blackjack.util.ItemBuilder;
+import me.perotin.blackjack.util.XMaterial;
 import org.bukkit.ChatColor;
-import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.ArrayList;
+import java.util.*;
 
 /* Created by Perotin on 12/27/18 */
 public class BlackjackInventoryClickEvent implements Listener {
@@ -25,6 +26,7 @@ public class BlackjackInventoryClickEvent implements Listener {
     public BlackjackInventoryClickEvent(Blackjack plugin) {
         this.plugin = plugin;
     }
+    private HashMap<UUID, BukkitRunnable> inTutorial = new HashMap<>();
 
 
     private void updateInventoryForStay(final ArrayList<String> houseCards, Inventory clicked, Player clicker, int x) {
@@ -32,10 +34,10 @@ public class BlackjackInventoryClickEvent implements Listener {
                 @Override
                 public void run() {
                     ItemStack toUpdate = clicked.getItem(x);
-                    if (toUpdate != null && toUpdate.getType() != Material.AIR && toUpdate.getType() == Material.RED_STAINED_GLASS_PANE) {
+                    if (toUpdate != null && toUpdate.getType() != XMaterial.AIR.parseMaterial() && toUpdate.getType() == XMaterial.RED_STAINED_GLASS_PANE.parseMaterial()) {
                         // update it
                         ItemBuilder builder = new ItemBuilder(toUpdate);
-                        builder.type(Material.GREEN_STAINED_GLASS_PANE);
+                        builder.type(XMaterial.GREEN_STAINED_GLASS_PANE.parseMaterial());
                         builder.name(ChatColor.YELLOW + BlackjackGame.convertToFullText(houseCards.get(houseIndex)));
                         houseIndex++;
                         if(houseIndex >= houseCards.size() - 1){
@@ -53,6 +55,16 @@ public class BlackjackInventoryClickEvent implements Listener {
 
 
 
+        @EventHandler
+        public void onChat(AsyncPlayerChatEvent event){
+        if(inTutorial.keySet().contains(event.getPlayer().getUniqueId())){
+            event.setCancelled(true);
+            if(event.getMessage().equalsIgnoreCase("cancel")){
+                inTutorial.remove(event.getPlayer());
+
+            }
+        }
+        }
     @EventHandler
     public void onClick(InventoryClickEvent event) {
         Inventory clicked = event.getInventory();
@@ -77,9 +89,24 @@ public class BlackjackInventoryClickEvent implements Listener {
             if (currentGame != null) {
                 event.setCancelled(true);
                 ItemStack item = event.getCurrentItem();
-                if (item != null && item.getType() != Material.AIR) {
+                if (item != null && item.getType() != XMaterial.AIR.parseMaterial()) {
                     // its a block
-                    if (item.getType() == Material.MAP && item.getItemMeta().getDisplayName().equals(plugin.getString("hit-item"))) {
+                    if(item.getType() == XMaterial.PAPER.parseMaterial() && item.getItemMeta().getDisplayName().equals(plugin.getString("tutorial-name"))){
+                        // tutorial
+                        clicker.closeInventory();
+                        List<String> tutorialMessages = plugin.getConfig().getStringList("tutorial");
+                            new BukkitRunnable(){
+                                @Override
+                                public void run(){
+                                    for(String s : tutorialMessages) {
+                                        clicker.sendMessage(ChatColor.translateAlternateColorCodes('&', s));
+                                    }
+                                }
+                            }.runTaskTimer(plugin, 20, 120);
+
+
+                    }
+                    if (item.getType() == XMaterial.MAP.parseMaterial() && item.getItemMeta().getDisplayName().equals(plugin.getString("hit-item"))) {
                         // they hit
                         currentGame.getNextCard();
                         int score = currentGame.getScoreUnder21(currentGame.getPlayerCards());
@@ -91,7 +118,7 @@ public class BlackjackInventoryClickEvent implements Listener {
                         clicker.openInventory(currentGame.getInventory(true));
 
 
-                    } else if (item.getType() == Material.BARRIER && item.getItemMeta().getDisplayName().equals(plugin.getString("stand-item"))) {
+                    } else if (item.getType() == XMaterial.BARRIER.parseMaterial() && item.getItemMeta().getDisplayName().equals(plugin.getString("stand-item"))) {
                         // they stand
                         currentGame.setPlayerTurn(false);
                         int houseScore = currentGame.getScoreUnder21(currentGame.getHouseCards());

@@ -3,6 +3,12 @@
 #      by Perotin
 
 
+# Set to true if you want this plugin to use vault eco, false if you want it to use exp
+cash-or-xp: true
+# This is a toggle of whether or not players should be allowed to bet more money than they currently have
+bet-overflow: false
+# If the above is set to true, this is the max amount they can bet of money theey don't have
+bet-overflow-max: 1000
 
 # Messages used in plugin
 number-only: "&cYou must insert a numeric value for your bet!"
@@ -21,3 +27,14 @@ earnings: "&eYou $result$ $number$ coins!"
 won: "won"
 lost: "lost"
 tied: "&eYou tied so you get your coins back."
+cannot-bet-that-much: "&cYou cannot bet more money than you have!"
+can-only-bet: "&cYou can only bet $amount$ over your total balance!"
+tutorial-name: "&eDon't know how to play? Click me!"
+tutorial:
+   - "&eWelcome to this BlackJack tutorial! To cancel, type &ccancel"
+   - "&eThe goal of the game is to get as close to a score of 21 without going over, and beat the dealer by having a higher score. "
+   - "&eCards 2-10 are worth their face value (4 of Spades is worth 4)."
+   - "&eKings, Jacks, and Queens are worth 10. Ace is worth 1 or 11, depending on what is better for the player."
+   - "&e'Hitting' is when you want another card, but you take the risk of going over 21 and losing."
+   - "&e 'Standing' is when you are confident with your cards, and want to end the game."
+   - "&eThanks for playing!"
