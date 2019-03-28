@@ -2,6 +2,8 @@ package me.perotin.blackjack.commands;
 
 import me.perotin.blackjack.Blackjack;
 import me.perotin.blackjack.objects.BlackjackGame;
+import me.perotin.blackjack.objects.BlackjackPlayer;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -27,15 +29,40 @@ public class BlackjackCommand implements CommandExecutor {
         if(commandSender instanceof Player){
             Player player = (Player) commandSender;
             if(player.hasPermission("blackjack.play")) {
-                if (args.length > 0) {
+                if (args.length >= 1) {
                     Double betAmount;
 
                     try {
                         betAmount = Double.parseDouble(args[0]);
                     } catch (NumberFormatException ex) {
-                        // did not parse a number
-                        player.sendMessage(plugin.getString("number-only"));
-                        return true;
+                        if(Bukkit.getPlayer(args[0]) != null){
+                            // send player stats
+                            // eventually do all player lookups, not just online
+                            BlackjackPlayer blackjackPlayer = plugin.getPlayerFor(player);
+                            if(blackjackPlayer != null){
+                                player.sendMessage(ChatColor.BLACK + "------------- " + ChatColor.RED + args[0] + ChatColor.BLACK + " -------------");
+                                player.sendMessage(ChatColor.RED + "Wins: " +ChatColor.WHITE + blackjackPlayer.getWins());
+                                player.sendMessage(ChatColor.RED + "Losses: " +ChatColor.WHITE + blackjackPlayer.getLosses());
+                                double ratio = 0;
+                                if(blackjackPlayer.getLosses() == 0) {
+                                     ratio = blackjackPlayer.getWins();
+                                } else {
+                                    ratio = blackjackPlayer.getWins() / blackjackPlayer.getLosses();
+                                }
+
+                                player.sendMessage(ChatColor.RED + "W/L Ratio: " +ChatColor.WHITE + ratio);
+                                return true;
+                            } else {
+                                // should never be the case
+                                player.sendMessage(ChatColor.RED+ "Something has gone wrong...");
+                                return true;
+                            }
+
+
+                        } else{
+                            player.sendMessage(plugin.getString("number-or-player"));
+                            return true;
+                        }
                     }
 
                     // search up if they already have an on-going game

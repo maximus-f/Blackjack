@@ -11,7 +11,7 @@ bet-overflow: false
 bet-overflow-max: 1000
 
 # Messages used in plugin
-number-only: "&cYou must insert a numeric value for your bet!"
+number-or-player: "&cIncorrect args! /blackjack <amount> or /blackjack <player>"
 no-permission: "&cYou do not have permissions to do this!"
 menu-title: "Blackjack: Betting $number$"
 blackjack-dealer: "&8&lDealer"
@@ -19,7 +19,7 @@ dealer-lore: "&7&oHit or Stand?"
 dealer-cards: "&eDealer cards ==>"
 player-cards: "&eYour cards ==>"
 unknown-card: "&e???"
-incorrect-args: "&cImproper arguments > /blackjack <amount>"
+incorrect-args: "&cImproper arguments > /blackjack <amount> or /blackjack <player>"
 hit-item: "&eHit"
 stand-item: "&eStand"
 end-game: "&7Your Score: &e$score$ &7Dealer Score: &e$score2$"

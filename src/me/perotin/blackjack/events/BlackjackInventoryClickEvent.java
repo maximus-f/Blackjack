@@ -2,6 +2,7 @@ package me.perotin.blackjack.events;
 
 import me.perotin.blackjack.Blackjack;
 import me.perotin.blackjack.objects.BlackjackGame;
+import me.perotin.blackjack.objects.BlackjackPlayer;
 import me.perotin.blackjack.util.ItemBuilder;
 import me.perotin.blackjack.util.XMaterial;
 import org.bukkit.ChatColor;
@@ -23,64 +24,67 @@ public class BlackjackInventoryClickEvent implements Listener {
     private Blackjack plugin;
 
     private int houseIndex = 1;
+
     public BlackjackInventoryClickEvent(Blackjack plugin) {
         this.plugin = plugin;
     }
+
     private HashMap<UUID, BukkitRunnable> inTutorial = new HashMap<>();
 
 
     private void updateInventoryForStay(final ArrayList<String> houseCards, Inventory clicked, Player clicker, int x) {
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    ItemStack toUpdate = clicked.getItem(x);
-                    if (toUpdate != null && toUpdate.getType() != XMaterial.AIR.parseMaterial() && toUpdate.getType() == XMaterial.RED_STAINED_GLASS_PANE.parseMaterial()) {
-                        // update it
-                        ItemBuilder builder = new ItemBuilder(toUpdate);
-                        builder.type(XMaterial.GREEN_STAINED_GLASS_PANE.parseMaterial());
-                        builder.name(ChatColor.YELLOW + BlackjackGame.convertToFullText(houseCards.get(houseIndex)));
-                        houseIndex++;
-                        if(houseIndex >= houseCards.size() - 1){
-                            houseIndex = 1;
-                        }
-                        clicked.setItem(x, builder.build());
-
-                        clicker.playSound(clicker.getLocation(), Sound.BLOCK_ANVIL_HIT, 5, 1);
-
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                ItemStack toUpdate = clicked.getItem(x);
+                if (toUpdate != null && toUpdate.getType() != XMaterial.AIR.parseMaterial() && toUpdate.getType() == XMaterial.RED_STAINED_GLASS_PANE.parseMaterial()) {
+                    // update it
+                    ItemBuilder builder = new ItemBuilder(toUpdate);
+                    builder.type(XMaterial.GREEN_STAINED_GLASS_PANE.parseMaterial());
+                    builder.name(ChatColor.YELLOW + BlackjackGame.convertToFullText(houseCards.get(houseIndex)));
+                    houseIndex++;
+                    if (houseIndex >= houseCards.size() - 1) {
+                        houseIndex = 1;
                     }
+                    clicked.setItem(x, builder.build());
+
+                    clicker.playSound(clicker.getLocation(), Sound.BLOCK_ANVIL_HIT, 5, 1);
 
                 }
-            }.runTaskLater(plugin, 20);
-        }
+
+            }
+        }.runTaskLater(plugin, 20);
+    }
 
 
-
-        @EventHandler
-        public void onChat(AsyncPlayerChatEvent event){
-        if(inTutorial.keySet().contains(event.getPlayer().getUniqueId())){
+    @EventHandler
+    public void onChat(AsyncPlayerChatEvent event) {
+        if (inTutorial.keySet().contains(event.getPlayer().getUniqueId())) {
             event.setCancelled(true);
-            if(event.getMessage().equalsIgnoreCase("cancel")){
+            if (event.getMessage().equalsIgnoreCase("cancel")) {
                 inTutorial.remove(event.getPlayer());
 
             }
         }
-        }
+    }
+
     @EventHandler
     public void onClick(InventoryClickEvent event) {
         Inventory clicked = event.getInventory();
         if (event.getWhoClicked() instanceof Player) {
             Player clicker = (Player) event.getWhoClicked();
 
+            BlackjackPlayer player = plugin.getPlayerFor(clicker);
+
             BlackjackGame currentGame = null;
             for (BlackjackGame game : plugin.getCurrentGames()) {
                 if (game.getPlayer().getUniqueId().equals(clicker.getUniqueId())) {
                     // same player
-                        if (clicked.getName().equals(game.getInventory(true).getName()) ||
-                                clicked.getName().equals(game.getInventory(false).getName())) {
-                            // same inventory, its safe to say its a game click
-                            currentGame = game;
-                        }
-
+                    if (clicked.getName().equals(game.getInventory(true).getName()) ||
+                            clicked.getName().equals(game.getInventory(false).getName())) {
+                        // same inventory, its safe to say its a game click
+                        currentGame = game;
+                    }
 
 
                 }
@@ -91,18 +95,15 @@ public class BlackjackInventoryClickEvent implements Listener {
                 ItemStack item = event.getCurrentItem();
                 if (item != null && item.getType() != XMaterial.AIR.parseMaterial()) {
                     // its a block
-                    if(item.getType() == XMaterial.PAPER.parseMaterial() && item.getItemMeta().getDisplayName().equals(plugin.getString("tutorial-name"))){
+                    if (item.getType() == XMaterial.PAPER.parseMaterial() && item.getItemMeta().getDisplayName().equals(plugin.getString("tutorial-name"))) {
                         // tutorial
                         clicker.closeInventory();
                         List<String> tutorialMessages = plugin.getConfig().getStringList("tutorial");
-                            new BukkitRunnable(){
-                                @Override
-                                public void run(){
-                                    for(String s : tutorialMessages) {
-                                        clicker.sendMessage(ChatColor.translateAlternateColorCodes('&', s));
-                                    }
-                                }
-                            }.runTaskTimer(plugin, 20, 120);
+                        for (String s : tutorialMessages) {
+
+                            clicker.sendMessage(ChatColor.translateAlternateColorCodes('&', s));
+
+                        }
 
 
                     }
@@ -113,6 +114,7 @@ public class BlackjackInventoryClickEvent implements Listener {
                         if (score > 21) {
                             // they lose
                             currentGame.endGame(BlackjackGame.Ending.LOSE);
+                            player.addLoss();
                             return;
                         }
                         clicker.openInventory(currentGame.getInventory(true));
@@ -127,7 +129,7 @@ public class BlackjackInventoryClickEvent implements Listener {
                             int playerScore = currentGame.getScoreUnder21(currentGame.getPlayerCards());
 
                             final ArrayList<String> houseCards = currentGame.getHouseCards();
-                            for(int x = 12; x <= 17; x++) {
+                            for (int x = 12; x <= 17; x++) {
                                 // revealing house cards
                                 updateInventoryForStay(houseCards, clicked, clicker, x);
 
@@ -135,13 +137,16 @@ public class BlackjackInventoryClickEvent implements Listener {
                             // end game logic
                             if (houseScore > 21) {
                                 // house lose
+                                player.addWin();
                                 currentGame.endGame(BlackjackGame.Ending.WIN);
                             } else if (houseScore > playerScore) {
                                 // house wins
+                                player.addLoss();
                                 currentGame.endGame(BlackjackGame.Ending.LOSE);
                             } else if (playerScore > houseScore) {
                                 // player wins
                                 currentGame.endGame(BlackjackGame.Ending.WIN);
+                                player.addWin();
                             } else if (playerScore == houseScore) {
                                 // tie
                                 currentGame.endGame(BlackjackGame.Ending.TIE);
@@ -156,20 +161,23 @@ public class BlackjackInventoryClickEvent implements Listener {
 
                             if (houseScore >= 17) {
                                 final ArrayList<String> houseCards = currentGame.getHouseCards();
-                                for(int x = 12; x< 17; x++) {
+                                for (int x = 12; x < 17; x++) {
 
                                     updateInventoryForStay(houseCards, clicked, clicker, x);
                                 }
                                 if (houseScore > 21) {
                                     // house lose
                                     currentGame.endGame(BlackjackGame.Ending.WIN);
+                                    player.addWin();
                                     return;
                                 } else if (houseScore > playerScore) {
                                     // house wins
                                     currentGame.endGame(BlackjackGame.Ending.LOSE);
+                                    player.addLoss();
                                 } else if (playerScore > houseScore) {
                                     // player wins
                                     currentGame.endGame(BlackjackGame.Ending.WIN);
+                                    player.addWin();
                                 } else if (playerScore == houseScore) {
                                     // tie
                                     currentGame.endGame(BlackjackGame.Ending.TIE);
@@ -183,19 +191,23 @@ public class BlackjackInventoryClickEvent implements Listener {
 
                                 if (houseScore >= 17) {
                                     final ArrayList<String> houseCards = currentGame.getHouseCards();
-                                    for(int x = 12; x< 17; x++) {
+                                    for (int x = 12; x < 17; x++) {
 
                                         updateInventoryForStay(houseCards, clicked, clicker, x);
                                     }
                                     if (houseScore > 21) {
                                         // house lose
                                         currentGame.endGame(BlackjackGame.Ending.WIN);
+                                        player.addWin();
                                     } else if (houseScore > playerScore) {
                                         // house wins
                                         currentGame.endGame(BlackjackGame.Ending.LOSE);
+                                        player.addLoss();
                                     } else if (playerScore > houseScore) {
                                         // player wins
+                                        player.addWin();
                                         currentGame.endGame(BlackjackGame.Ending.WIN);
+
                                     } else if (playerScore == houseScore) {
                                         // tie
                                         currentGame.endGame(BlackjackGame.Ending.TIE);
@@ -209,19 +221,24 @@ public class BlackjackInventoryClickEvent implements Listener {
 
                                     if (houseScore >= 17) {
                                         final ArrayList<String> houseCards = currentGame.getHouseCards();
-                                        for(int x = 12; x< 17; x++) {
+                                        for (int x = 12; x < 17; x++) {
 
                                             updateInventoryForStay(houseCards, clicked, clicker, x);
                                         }
                                         if (houseScore > 21) {
                                             // house lose
                                             currentGame.endGame(BlackjackGame.Ending.WIN);
+                                            player.addLoss();
+
                                         } else if (houseScore > playerScore) {
                                             // house wins
                                             currentGame.endGame(BlackjackGame.Ending.LOSE);
+                                            player.addLoss();
                                         } else if (playerScore > houseScore) {
                                             // player wins
                                             currentGame.endGame(BlackjackGame.Ending.WIN);
+                                            player.addLoss();
+
                                         } else if (playerScore == houseScore) {
                                             // tie
                                             currentGame.endGame(BlackjackGame.Ending.TIE);

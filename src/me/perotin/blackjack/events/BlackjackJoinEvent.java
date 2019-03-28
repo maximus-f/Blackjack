@@ -19,7 +19,7 @@ public class BlackjackJoinEvent implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent event){
         Player joiner = event.getPlayer();
-        if(!plugin.getPlayers().contains(plugin.getPlayerFor(joiner.getUniqueId()))){
+        if(plugin.getPlayerFor(joiner) ==null){
             plugin.getPlayers().add(BlackjackPlayer.loadPlayer(joiner));
         }
     }

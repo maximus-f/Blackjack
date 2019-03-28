@@ -62,13 +62,22 @@ public class Blackjack extends JavaPlugin {
         players.stream().forEach(player ->{
             file.set(player.getUuid().toString()+".wins", player.getWins());
             file.set(player.getUuid().toString()+".losses", player.getLosses());
+            file.save();
 
         });
     }
 
 
-    public BlackjackPlayer getPlayerFor(UUID uuid){
-        return players.stream().filter(p -> uuid.equals(p.getUuid())).collect(Collectors.toList()).get(0);
+    public BlackjackPlayer getPlayerFor(Player p){
+
+       //return players.stream().filter(p -> uuid.equals(p.getUuid())).collect(Collectors.toList()).get(0);
+        if(!players.isEmpty()){
+            for(BlackjackPlayer player : players){
+                if(player.getUuid().equals(p.getUniqueId())) return player;
+            }
+        }
+        return null;
+
     }
     public Set<BlackjackPlayer> getPlayers() {
         return players;
