@@ -36,6 +36,7 @@ public class ItemBuilder implements Listener {
      * @since 1.0
      */
     public ItemBuilder(final Material mat) {
+
         is = new ItemStack(mat);
     }
 

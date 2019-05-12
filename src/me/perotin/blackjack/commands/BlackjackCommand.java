@@ -29,6 +29,8 @@ public class BlackjackCommand implements CommandExecutor {
         if(commandSender instanceof Player){
             Player player = (Player) commandSender;
             if(player.hasPermission("blackjack.play")) {
+                double betMax = plugin.getBetMax();
+                double betMin = plugin.getBetMin();
                 if (args.length >= 1) {
                     Double betAmount;
 
@@ -63,6 +65,20 @@ public class BlackjackCommand implements CommandExecutor {
                             player.sendMessage(plugin.getString("number-or-player"));
                             return true;
                         }
+                    }
+
+                    if(betAmount < 0){
+                        betAmount = 0.0;
+                    }
+                    if(betMax > 0 && betAmount > betMax){
+                        player.sendMessage(plugin.getString("bet-max-message")
+                        .replace("$amount$", betMax+""));
+                        return true;
+                    }
+                    if(betMin > 0 && betAmount < betMin){
+                        player.sendMessage(plugin.getString("bet-min-message")
+                                .replace("$amount$", betMin+""));
+                        return true;
                     }
 
                     // search up if they already have an on-going game
@@ -103,6 +119,9 @@ public class BlackjackCommand implements CommandExecutor {
                         BlackjackGame game = new BlackjackGame(player, betAmount);
                         plugin.getCurrentGames().add(game);
                         player.openInventory(game.getInventory(true));
+                        if(plugin.getConfig().getBoolean("custom-command")){
+                            Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), plugin.getConfig().getString("command").replace("$amount$", betAmount+""));
+                        }
                     }
 
                 } else {

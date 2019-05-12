@@ -9,6 +9,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 
 
@@ -43,34 +44,35 @@ public class BlackjackGame {
 //        this.houseScore = houseScore;
     }
 
-    public void getNextCard(){
-            int random = new Random().nextInt(cardsAvailible.size());
-            String card = cardsAvailible.get(random);
-            if(isPlayerTurn()) {
-                playerCards.add(card);
-            } else {
-                houseCards.add(card);
-            }
+    public void getNextCard() {
+        int random = new Random().nextInt(cardsAvailible.size());
+        String card = cardsAvailible.get(random);
+        if (isPlayerTurn()) {
+            playerCards.add(card);
+        } else {
+            houseCards.add(card);
+        }
         cardsAvailible.remove(random);
 
     }
 
-    public void updateInventoryForHouse(){
+    public void updateInventoryForHouse() {
         player.openInventory(getInventory(false));
     }
-    public ArrayList<String> getPlayerCards(){
+
+    public ArrayList<String> getPlayerCards() {
         return playerCards;
     }
 
-    public ArrayList<String> getHouseCards(){
+    public ArrayList<String> getHouseCards() {
         return houseCards;
     }
 
-    public int getScoreUnder21(List<String> cards){
+    public int getScoreUnder21(List<String> cards) {
         List<String> cardsToRemoveAndAdd = new ArrayList<>();
 
-        for(String s : cards){
-            if(s.startsWith("A")){
+        for (String s : cards) {
+            if (s.startsWith("A")) {
                 cardsToRemoveAndAdd.add(s);
             }
         }
@@ -78,13 +80,13 @@ public class BlackjackGame {
         cards.addAll(cardsToRemoveAndAdd);
 
         int score = 0;
-        for(String s : cards){
-            if(!s.startsWith("A")) {
+        for (String s : cards) {
+            if (!s.startsWith("A")) {
                 score += valueOfCard(s);
             } else {
-                if(score + 11 <= 21){
+                if (score + 11 <= 21) {
                     score += 11;
-                } else if(score + 11 > 21){
+                } else if (score + 11 > 21) {
                     score += 1;
                 }
             }
@@ -94,10 +96,9 @@ public class BlackjackGame {
     }
 
 
-
-    public Inventory getInventory(boolean hideHouse){
+    public Inventory getInventory(boolean hideHouse) {
         Blackjack plugin = Blackjack.getInstance();
-        Inventory inventory = Bukkit.createInventory(null, 54, Blackjack.getInstance().getString("menu-title").replace("$number$", ""+betAmount));
+        Inventory inventory = Bukkit.createInventory(null, 54, Blackjack.getInstance().getString("menu-title").replace("$number$", "" + betAmount));
         ItemBuilder tutorial = new ItemBuilder(XMaterial.PAPER.parseItem());
         tutorial.name(plugin.getString("tutorial-name"));
         inventory.setItem(0, tutorial.build());
@@ -106,11 +107,13 @@ public class BlackjackGame {
         dealer.lore(Blackjack.getInstance().getString("dealer-lore"));
         inventory.setItem(4, dealer.build());
 
-        ItemBuilder sign = new ItemBuilder(XMaterial.SIGN.parseItem());
+
+        ItemBuilder sign = new ItemBuilder(XMaterial.OAK_SIGN.parseMaterial());
         sign.name(plugin.getString("dealer-cards"));
         inventory.setItem(9, sign.build());
-        sign.name(plugin.getString("player-cards") +" " + getScoreUnder21(playerCards));
+        sign.name(plugin.getString("player-cards") + " " + getScoreUnder21(playerCards));
         inventory.setItem(36, sign.build());
+
 
         ItemBuilder hit = new ItemBuilder(XMaterial.MAP.parseItem());
         hit.name(Blackjack.getInstance().getString("hit-item"));
@@ -121,14 +124,14 @@ public class BlackjackGame {
         inventory.setItem(31, stand.build());
 
         int invSlot = 38;
-        for(String card : playerCards){
+        for (String card : playerCards) {
             inventory.setItem(invSlot, cardAsItemStack(card, true));
             invSlot++;
         }
 
 
         int dealersSlot = 11;
-        if(hideHouse) {
+        if (hideHouse) {
             for (String card : houseCards) {
                 if (dealersSlot == 11) {
                     inventory.setItem(dealersSlot, cardAsItemStack(card, true));
@@ -145,12 +148,12 @@ public class BlackjackGame {
             }
         }
 
-return inventory;
+        return inventory;
 
     }
 
-    private ItemStack cardAsItemStack(String card, boolean show){
-        if(show) {
+    private ItemStack cardAsItemStack(String card, boolean show) {
+        if (show) {
             ItemBuilder builder = new ItemBuilder(XMaterial.GREEN_STAINED_GLASS_PANE.parseItem());
             builder.name(ChatColor.YELLOW + convertToFullText(card));
             return builder.build();
@@ -183,19 +186,20 @@ return inventory;
         return cardsAvailible;
     }
 
-    public void setCardsAvailible(ArrayList<String>cardsAvailible) {
+    public void setCardsAvailible(ArrayList<String> cardsAvailible) {
         this.cardsAvailible = cardsAvailible;
     }
 
-    public static String convertToFullText(String card){
+    public static String convertToFullText(String card) {
         String identifier = "";
-        if(card.length() == 2) {
-         identifier = card.substring(0, 1);} else if(card.length() == 3){
+        if (card.length() == 2) {
+            identifier = card.substring(0, 1);
+        } else if (card.length() == 3) {
             identifier = card.substring(0, 2);
         }
 
         String suit = card.substring(card.length() - 1);
-        switch (suit){
+        switch (suit) {
             case "s":
                 suit = "Spades";
                 break;
@@ -208,7 +212,7 @@ return inventory;
             case "c":
                 suit = "Clubs";
         }
-        switch (identifier){
+        switch (identifier) {
             case "J":
                 identifier = "Jack";
                 break;
@@ -226,33 +230,52 @@ return inventory;
     }
 
 
-
-    public void endGame(Ending end){
+    public void endGame(Ending end) {
         player.closeInventory();
         Blackjack plugin = Blackjack.getInstance();
         player.sendMessage(plugin.getString("end-game")
-        .replace("$score$", getScoreUnder21(getPlayerCards()) +"")
-        .replace("$score2$", getScoreUnder21(getHouseCards()) +""));
-        if(end == Ending.WIN){
+                .replace("$score$", getScoreUnder21(getPlayerCards()) + "")
+                .replace("$score2$", getScoreUnder21(getHouseCards()) + ""));
+        if (end == Ending.WIN) {
 
-            EconomyResponse er = Blackjack.getEconomy().depositPlayer(player, betAmount);
+            EconomyResponse er;
+            boolean taxxed = false;
+            double earnings = 0;
+            if(plugin.getTaxPercent() != 0.0 && plugin.getTaxPercent() <= 100.0) {
+                double tax = plugin.getTaxPercent() / 100.0;
+                double postTax = betAmount - (tax * betAmount);
+                earnings = postTax;
+                 er = Blackjack.getEconomy().depositPlayer(player, postTax);
+                 taxxed = true;
+            } else {
+                earnings = betAmount;
+                 er = Blackjack.getEconomy().depositPlayer(player, betAmount);
+
+            }
 
 
             player.sendMessage(plugin.getString("earnings")
-            .replace("$result$", plugin.getString("won"))
-            .replace("$number$", getBetAmount()+""));
-            if(er.transactionSuccess()){
-                player.sendMessage(ChatColor.GREEN + "+"+betAmount);
+                    .replace("$result$", plugin.getString("won"))
+                    .replace("$number$", earnings + ""));
+            if (er.transactionSuccess()) {
+                if(taxxed) {
+                    double tax = plugin.getTaxPercent() / 100.0;
+                    double postTax = tax * betAmount;
+                    player.sendMessage(plugin.getString("taxxed").replace("$amount$", postTax+""));
+                } else {
+                    player.sendMessage(ChatColor.GREEN + "+" + betAmount);
+
+                }
             }
-        } else if (end == Ending.LOSE){
+        } else if (end == Ending.LOSE) {
             EconomyResponse er = Blackjack.getEconomy().withdrawPlayer(player, betAmount);
 
             player.sendMessage(plugin.getString("earnings")
                     .replace("$result$", plugin.getString("lost"))
-                    .replace("$number$", getBetAmount()+""));
+                    .replace("$number$", getBetAmount() + ""));
 
-            if(er.transactionSuccess()){
-                player.sendMessage(ChatColor.RED +"-"+betAmount);
+            if (er.transactionSuccess()) {
+                player.sendMessage(ChatColor.RED + "-" + betAmount);
             }
 
         } else {
@@ -265,25 +288,31 @@ return inventory;
         Blackjack.getInstance().getCurrentGames().remove(this);
 
     }
-    private int valueOfCard(String card){
+
+    private int valueOfCard(String card) {
         // make sure this is right and its not 1 because starting at 0
-        if(card.length() == 2) {
+        if (card.length() == 2) {
             card = card.substring(0, 1);
             switch (card) {
-                case "K": return 10;
-                case "J": return 10;
-                case "Q": return 10;
-                case "A": return 0;
-                default: return Integer.parseInt(card);
+                case "K":
+                    return 10;
+                case "J":
+                    return 10;
+                case "Q":
+                    return 10;
+                case "A":
+                    return 0;
+                default:
+                    return Integer.parseInt(card);
             }
-        } else if(card.length() == 3){
+        } else if (card.length() == 3) {
             return 10;
         } else {
             return 0;
         }
     }
 
-   public enum Ending {
+    public enum Ending {
         WIN, LOSE, TIE
     }
 }

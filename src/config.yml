@@ -10,6 +10,19 @@ bet-overflow: false
 # If the above is set to true, this is the max amount they can bet of money theey don't have
 bet-overflow-max: 1000
 
+# The percentage that should be taxed / deducted from winnings. Set to 0.0 for no taxes. Range is 0.0 to 100.0 .
+tax-percent: 0.0
+
+# Minimum amount able to bet and the maximum amount to bet! Setting either to zero will negate it completely.
+bet-min: 0.0
+bet-max: 0.0
+
+
+# One user requested this, basically, it'll run the specified command below when each round of blackjack starts. If you want
+# to use this, then set the below to 'true' and specify your command.
+custom-command: false
+command: "/Example $amount$"
+
 # Messages used in plugin
 number-or-player: "&cIncorrect args! /blackjack <amount> or /blackjack <player>"
 no-permission: "&cYou do not have permissions to do this!"
@@ -24,6 +37,7 @@ hit-item: "&eHit"
 stand-item: "&eStand"
 end-game: "&7Your Score: &e$score$ &7Dealer Score: &e$score2$"
 earnings: "&eYou $result$ $number$ coins!"
+taxxed: "&c-$amount$ taxed."
 won: "won"
 lost: "lost"
 tied: "&eYou tied so you get your coins back."
@@ -38,3 +52,5 @@ tutorial:
    - "&e'Hitting' is when you want another card, but you take the risk of going over 21 and losing."
    - "&e 'Standing' is when you are confident with your cards, and want to end the game."
    - "&eThanks for playing!"
+bet-max-message: "&cThe maximum you can bet is $amount$!"
+bet-min-message: "&cThe minimum you can bet is $amount$!"

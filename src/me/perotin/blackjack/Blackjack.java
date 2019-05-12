@@ -6,6 +6,8 @@ import me.perotin.blackjack.events.BlackjackJoinEvent;
 import me.perotin.blackjack.objects.BlackFile;
 import me.perotin.blackjack.objects.BlackjackGame;
 import me.perotin.blackjack.objects.BlackjackPlayer;
+import me.perotin.blackjack.util.Metrics;
+import me.perotin.blackjack.util.UpdateChecker;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -15,8 +17,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 /* Created by Perotin on 12/24/18 */
 public class Blackjack extends JavaPlugin {
@@ -27,6 +27,7 @@ public class Blackjack extends JavaPlugin {
     private boolean overFlow;
     private boolean cash;
     private Set<BlackjackPlayer> players;
+    private double taxPercent, betMin, betMax = 0;
 
     public static String[] cards = {
             "As",  "2s", "3s", "4s", "5s", "6s", "7s", "8s", "9s", "10s", "Js", "Qs", "Ks",
@@ -35,15 +36,23 @@ public class Blackjack extends JavaPlugin {
             "Ad",  "2d", "3d", "4d", "5d", "6d", "7d", "8d", "9d", "10d", "Jd", "Qd", "Kd"};
     @Override
     public void onEnable(){
+        Metrics metrics = new Metrics(this);
+
+        new UpdateChecker(this).checkForUpdate();
         setupEconomy();
         currentGames = new HashSet<>();
         players = new HashSet<>();
         instance = this;
+        this.taxPercent = getConfig().getDouble("tax-percent");
+        this.betMax = getConfig().getDouble("bet-max");
+        this.betMin = getConfig().getDouble("bet-min");
+
         saveDefaultConfig();
         // custom command string, remember that kangarko stuff ye
         getCommand("blackjack").setExecutor(new BlackjackCommand(this));
         Bukkit.getPluginManager().registerEvents(new BlackjackInventoryClickEvent(this), this);
         Bukkit.getPluginManager().registerEvents(new BlackjackJoinEvent(this), this);
+
 
 
         this.overFlow = getConfig().getBoolean("bet-overflow");
@@ -56,6 +65,14 @@ public class Blackjack extends JavaPlugin {
 
     }
 
+    public double getBetMin() {
+        return betMin;
+    }
+
+    public double getBetMax() {
+        return betMax;
+    }
+
     @Override
     public void onDisable(){
         BlackFile file = new BlackFile(BlackFile.BlackFilesType.STATS);
@@ -65,6 +82,10 @@ public class Blackjack extends JavaPlugin {
             file.save();
 
         });
+    }
+
+    public double getTaxPercent(){
+        return this.taxPercent;
     }
 
 
