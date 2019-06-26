@@ -43,14 +43,15 @@ public class BlackjackInventoryClickEvent implements Listener {
                     // update it
                     ItemBuilder builder = new ItemBuilder(toUpdate);
                     builder.type(XMaterial.GREEN_STAINED_GLASS_PANE.parseMaterial());
-                    builder.name(ChatColor.YELLOW + BlackjackGame.convertToFullText(houseCards.get(houseIndex)));
+                    if(houseIndex < houseCards.size()) {
+                        builder.name(ChatColor.YELLOW + BlackjackGame.convertToFullText(houseCards.get(houseIndex)));
+                    }
                     houseIndex++;
                     if (houseIndex >= houseCards.size() - 1) {
                         houseIndex = 1;
                     }
                     clicked.setItem(x, builder.build());
 
-                    clicker.playSound(clicker.getLocation(), Sound.BLOCK_ANVIL_HIT, 5, 1);
 
                 }
 
@@ -110,7 +111,13 @@ public class BlackjackInventoryClickEvent implements Listener {
 
 
                     }
-                    if (item.getType() == XMaterial.MAP.parseMaterial() && item.getItemMeta().getDisplayName().equals(plugin.getString("hit-item"))) {
+                    if (item.getType() == XMaterial.OAK_DOOR.parseMaterial() && item.getItemMeta().getDisplayName().equals(plugin.getString("surrender-item"))) {
+                        // they surrender
+                        currentGame.endGame(BlackjackGame.Ending.SURRENDER);
+
+                    }
+
+                        if (item.getType() == XMaterial.MAP.parseMaterial() && item.getItemMeta().getDisplayName().equals(plugin.getString("hit-item"))) {
                         // they hit
                         currentGame.getNextCard();
                         int score = currentGame.getScoreUnder21(currentGame.getPlayerCards());

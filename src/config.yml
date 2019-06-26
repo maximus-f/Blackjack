@@ -54,3 +54,6 @@ tutorial:
    - "&eThanks for playing!"
 bet-max-message: "&cThe maximum you can bet is $amount$!"
 bet-min-message: "&cThe minimum you can bet is $amount$!"
+surrender-item: "&eSurrender"
+surrender-lore: "&7&o(Retain half of your bet)"
+surrender-message: "&eYou surrendered, keeping $amount$ of your original $bet$ bet!"

@@ -3,6 +3,8 @@ package me.perotin.blackjack.commands;
 import me.perotin.blackjack.Blackjack;
 import me.perotin.blackjack.objects.BlackjackGame;
 import me.perotin.blackjack.objects.BlackjackPlayer;
+import net.milkbowl.vault.economy.Economy;
+import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -117,6 +119,7 @@ public class BlackjackCommand implements CommandExecutor {
                     if(noOtherGames) {
 
                         BlackjackGame game = new BlackjackGame(player, betAmount);
+                        EconomyResponse er = Blackjack.getEconomy().withdrawPlayer(player, betAmount);
                         plugin.getCurrentGames().add(game);
                         player.openInventory(game.getInventory(true));
                         if(plugin.getConfig().getBoolean("custom-command")){
