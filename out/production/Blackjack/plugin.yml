@@ -1,6 +1,6 @@
 name: Blackjack
 main: me.perotin.blackjack.Blackjack
-version: 1.3.4.2
+version: 1.4
 author: Perotin
 depends: [Vault]
 api-version: 1.13
@@ -9,3 +9,7 @@ commands:
       usage: /blackjack <amount>
       permission: blackjack.play
       aliases: [bj]
+   blackjackadmin:
+      usage: /blackjackadmin
+      permission: blackjack.admin
+      aliases: [bja]

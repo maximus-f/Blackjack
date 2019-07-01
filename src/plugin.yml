@@ -1,6 +1,6 @@
 name: Blackjack
 main: me.perotin.blackjack.Blackjack
-version: 1.4
+version: 1.4.1
 author: Perotin
 depends: [Vault]
 api-version: 1.13

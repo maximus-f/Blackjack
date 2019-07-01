@@ -25,6 +25,7 @@ public class BlackjackGame {
     // true if player is next, false if house is next
     private boolean playerTurn;
     private ArrayList<String> cardsAvailible;
+    private Ending end = null;
 
     public BlackjackGame(Player player, double betAmount) {
         this.player = player;
@@ -123,10 +124,12 @@ public class BlackjackGame {
         stand.name(Blackjack.getInstance().getString("stand-item"));
         inventory.setItem(31, stand.build());
 
-        ItemBuilder surrender = new ItemBuilder(XMaterial.OAK_DOOR.parseItem());
-        surrender.name(Blackjack.getInstance().getString("surrender-item"));
-        surrender.lore(Blackjack.getInstance().getString("surrender-lore"));
-        inventory.setItem(32, surrender.build());
+        if(plugin.isSurrenderEnabled()) {
+            ItemBuilder surrender = new ItemBuilder(XMaterial.OAK_DOOR.parseItem());
+            surrender.name(Blackjack.getInstance().getString("surrender-item"));
+            surrender.lore(Blackjack.getInstance().getString("surrender-lore"));
+            inventory.setItem(32, surrender.build());
+        }
 
         int invSlot = 38;
         for (String card : playerCards) {
@@ -235,12 +238,37 @@ public class BlackjackGame {
     }
 
 
+    public double getResult(){
+        Blackjack plugin = Blackjack.getInstance();
+
+        if(end != null){
+            switch (end){
+                case TIE: return 0;
+                case WIN:
+                    if(plugin.getTaxPercent() != 0.0 && plugin.getTaxPercent() <= 100.0) {
+                        double tax = plugin.getTaxPercent() / 100.0;
+                        double postTax = betAmount - (tax * betAmount);
+                        return postTax;
+                    } else return betAmount;
+                case LOSE:
+                    return -betAmount;
+                case SURRENDER:
+                    double surrender = betAmount - (betAmount * (plugin.getSurrenderPercentage() / 100));
+
+                    return -surrender;
+            }
+        }
+        return Double.MAX_VALUE;
+    }
+
+
     public void endGame(Ending end) {
         player.closeInventory();
         Blackjack plugin = Blackjack.getInstance();
         player.sendMessage(plugin.getString("end-game")
                 .replace("$score$", getScoreUnder21(getPlayerCards()) + "")
                 .replace("$score2$", getScoreUnder21(getHouseCards()) + ""));
+        this.end = end;
         if (end == Ending.WIN) {
             EconomyResponse er;
             boolean taxxed = false;
@@ -264,6 +292,7 @@ public class BlackjackGame {
 
             plugin.setServerImpact(plugin.getServerImpact() - betAmount);
             plugin.increaseGamesPlayed();
+            plugin.increaseServerLosses();
             if (er.transactionSuccess()) {
                 if(taxxed) {
                     double tax = plugin.getTaxPercent() / 100.0;
@@ -287,9 +316,10 @@ public class BlackjackGame {
             // tie
             player.sendMessage(plugin.getString("tied"));
             EconomyResponse er = Blackjack.getEconomy().depositPlayer(player, betAmount);
+            plugin.increaseGamesPlayed();
         } else {
             // they surrender
-            double surrender = betAmount / 2.0;
+            double surrender = betAmount - (betAmount * (plugin.getSurrenderPercentage() / 100));
             player.sendMessage(plugin.getString("surrender-message")
             .replace("$amount$", surrender+"").replace("$bet$", betAmount+""));
 

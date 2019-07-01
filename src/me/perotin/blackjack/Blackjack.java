@@ -19,6 +19,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.HashSet;
 import java.util.Set;
 
+import static me.perotin.blackjack.objects.BlackFile.BlackFilesType.STATS;
+
 /* Created by Perotin on 12/24/18 */
 public class Blackjack extends JavaPlugin {
 
@@ -34,6 +36,8 @@ public class Blackjack extends JavaPlugin {
     private double serverWins;
     private double games;
     private double serverLosses;
+    private boolean surrender;
+    private double surrenderPercentage;
 
     public static String[] cards = {
             "As",  "2s", "3s", "4s", "5s", "6s", "7s", "8s", "9s", "10s", "Js", "Qs", "Ks",
@@ -46,6 +50,8 @@ public class Blackjack extends JavaPlugin {
         this.serverWins = 0;
         this.games = 0;
         this.serverLosses = 0;
+        this.surrender = getConfig().getBoolean("enable-surrender");
+        this.surrenderPercentage = getConfig().getDouble("surrender-percentage-to-take");
 
         new UpdateChecker(this).checkForUpdate();
         setupEconomy();
@@ -55,6 +61,7 @@ public class Blackjack extends JavaPlugin {
         this.taxPercent = getConfig().getDouble("tax-percent");
         this.betMax = getConfig().getDouble("bet-max");
         this.betMin = getConfig().getDouble("bet-min");
+        setServerImpact(new BlackFile(STATS).getConfiguration().getDouble("server-impact"));
 
         saveDefaultConfig();
         // custom command string, remember that kangarko stuff ye
@@ -72,13 +79,21 @@ public class Blackjack extends JavaPlugin {
 
     }
 
+    public boolean isSurrenderEnabled() {
+        return surrender;
+    }
+
+    public double getSurrenderPercentage() {
+        return surrenderPercentage;
+    }
+
 
     public double getServerLosses() {
         return serverLosses;
     }
 
     public double getTotalServerLosses() {
-        return new BlackFile(BlackFile.BlackFilesType.STATS).getConfiguration().getInt("server-losses") + getServerLosses();
+        return new BlackFile(STATS).getConfiguration().getInt("server-losses") + getServerLosses();
     }
 
     public void increaseServerLosses() {
@@ -94,7 +109,7 @@ public class Blackjack extends JavaPlugin {
     }
 
     public double getTotalServerGames() {
-        return new BlackFile(BlackFile.BlackFilesType.STATS).getConfiguration().getInt("server-games") + getGames();
+        return new BlackFile(STATS).getConfiguration().getInt("server-games") + getGames();
     }
 
 
@@ -102,7 +117,7 @@ public class Blackjack extends JavaPlugin {
         return serverWins;
     }
     public double getTotalServerWins() {
-        return new BlackFile(BlackFile.BlackFilesType.STATS).getConfiguration().getInt("server-wins") + getServerWins();
+        return new BlackFile(STATS).getConfiguration().getInt("server-wins") + getServerWins();
     }
 
     public void increaseServerWins() {
@@ -125,7 +140,7 @@ public class Blackjack extends JavaPlugin {
 
     @Override
     public void onDisable(){
-        BlackFile file = new BlackFile(BlackFile.BlackFilesType.STATS);
+        BlackFile file = new BlackFile(STATS);
         players.stream().forEach(player ->{
             file.set(player.getUuid().toString()+".wins", player.getWins());
             file.set(player.getUuid().toString()+".losses", player.getLosses());

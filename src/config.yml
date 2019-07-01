@@ -17,6 +17,13 @@ tax-percent: 0.0
 bet-min: 0.0
 bet-max: 0.0
 
+# The following options relate to the move to surrender
+
+# Should surrendering (forfeit the game and keep a % of your bet)
+enable-surrender: true
+
+# What percentage of the bet should the server take? (1-99)
+surrender-percentage-to-take: 50.0
 
 # One user requested this, basically, it'll run the specified command below when each round of blackjack starts. If you want
 # to use this, then set the below to 'true' and specify your command.
@@ -57,3 +64,9 @@ bet-min-message: "&cThe minimum you can bet is $amount$!"
 surrender-item: "&eSurrender"
 surrender-lore: "&7&o(Retain half of your bet)"
 surrender-message: "&eYou surrendered, keeping $amount$ of your original $bet$ bet!"
+
+# Session Messages
+earnings-gui: "&eEarnings: $amount$"
+keep-playing: "&aKeep playing?"
+stop-playing: "&cStop playing?"
+total-earnings: "&eTotal earnings: $amount$"

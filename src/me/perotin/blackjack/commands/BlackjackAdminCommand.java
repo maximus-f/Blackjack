@@ -6,6 +6,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
+import java.text.DecimalFormat;
 import java.util.stream.IntStream;
 
 /* Created by Perotin on 6/25/19 */
@@ -27,30 +28,34 @@ public class BlackjackAdminCommand implements CommandExecutor {
                 if(impact > 0)
                     sender.sendMessage(ChatColor.YELLOW + "Server impact: " + ChatColor.GREEN + "+"+impact);
                 else if(impact < 0)
-                    sender.sendMessage(ChatColor.YELLOW + "Server impact: " + ChatColor.RED + "-"+impact);
+                    sender.sendMessage(ChatColor.YELLOW + "Server impact: " + ChatColor.RED +impact);
                 else
                     sender.sendMessage(ChatColor.YELLOW + "Server impact: " + ChatColor.WHITE + impact);
 
                 double ties = plugin.getGames() - plugin.getServerLosses() - plugin.getServerWins();
                 double winRate = 100 * (plugin.getServerWins() / plugin.getGames());
 
-                double tWins, tLosses, tGames, tWinRate, tLossRate;
+                double tWins, tLosses, tGames, tWinRate, tTies, tLossRate;
                 tWins = plugin.getTotalServerWins();
                 tLosses = plugin.getTotalServerLosses();
                 tGames = plugin.getTotalServerGames();
-                tWinRate = tWins / tGames;
-                tLossRate = tLosses / tGames;
+                tWinRate = (tWins / tGames) * 100;
+                tLossRate = (tLosses / tGames) *100;
+                tTies = tGames - tWins -tLosses;
 
 
                 sender.sendMessage(ChatColor.translateAlternateColorCodes('&',  "&7&oSince last restart, the server has recorded these stats..."));
-                sender.sendMessage(ChatColor.YELLOW + "Server Wins: " + ChatColor.GREEN+plugin.getServerWins() + ChatColor.GRAY + "("+winRate+"% win rate)");
+                sender.sendMessage(ChatColor.YELLOW + "Server Wins: " + ChatColor.GREEN+plugin.getServerWins() + ChatColor.GRAY + " ("+ new DecimalFormat("#.##").format(winRate)
+                +"% win rate)");
                 sender.sendMessage(ChatColor.YELLOW + "Server Losses: " + ChatColor.RED+plugin.getServerLosses());
                 sender.sendMessage(ChatColor.YELLOW + "Server Ties: " + ChatColor.WHITE+ties);
-                sender.sendMessage(ChatColor.translateAlternateColorCodes('&',  "&7&oThe server has recorded these stats over "+ tGames+ " of BlackJack ..."));
-                sender.sendMessage(ChatColor.YELLOW + "Total Server Wins: " + ChatColor.GREEN+tWins + ChatColor.GRAY + "("+tWinRate+"% win rate)");
-                sender.sendMessage(ChatColor.YELLOW + "Total Server Losses: " + ChatColor.RED+tLosses + ChatColor.GRAY + "("+tLossRate+"% loss rate)");
-                sender.sendMessage(ChatColor.YELLOW + "Total Server Ties: " + ChatColor.WHITE+ties);
-                sender.sendMessage(ChatColor.translateAlternateColorCodes('&',  "On average, the server should win 52% of games."));
+                sender.sendMessage(ChatColor.translateAlternateColorCodes('&',  "&7&oThe server has recorded these stats over "+ (int) tGames+ " games of BlackJack ..."));
+                sender.sendMessage(ChatColor.YELLOW + "Total Server Wins: " + ChatColor.GREEN+tWins + ChatColor.GRAY + " ("+ new DecimalFormat("#.##").format(tWinRate)
+                +"% win rate)");
+                sender.sendMessage(ChatColor.YELLOW + "Total Server Losses: " + ChatColor.RED+tLosses + ChatColor.GRAY + " ("+ new DecimalFormat("#.##").format(tLossRate)
+                +"% loss rate)");
+                sender.sendMessage(ChatColor.YELLOW + "Total Server Ties: " + ChatColor.WHITE+tTies);
+                sender.sendMessage(ChatColor.translateAlternateColorCodes('&',  "&7&oOn average, the server should win 52% of games."));
                 sender.sendMessage(" ");
 
                 sender.sendMessage(ChatColor.RED + "You are running version " + plugin.getDescription().getVersion() + " made by Perotin");
