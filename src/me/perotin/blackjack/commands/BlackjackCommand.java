@@ -3,6 +3,7 @@ package me.perotin.blackjack.commands;
 import me.perotin.blackjack.Blackjack;
 import me.perotin.blackjack.objects.BlackjackGame;
 import me.perotin.blackjack.objects.BlackjackPlayer;
+import me.perotin.blackjack.objects.GameSession;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
@@ -42,12 +43,12 @@ public class BlackjackCommand implements CommandExecutor {
                         if(Bukkit.getPlayer(args[0]) != null){
                             // send player stats
                             // eventually do all player lookups, not just online
-                            BlackjackPlayer blackjackPlayer = plugin.getPlayerFor(player);
+                            BlackjackPlayer blackjackPlayer = plugin.getPlayerFor(Bukkit.getPlayer(args[0]));
                             if(blackjackPlayer != null){
                                 player.sendMessage(ChatColor.BLACK + "------------- " + ChatColor.RED + args[0] + ChatColor.BLACK + " -------------");
                                 player.sendMessage(ChatColor.RED + "Wins: " +ChatColor.WHITE + blackjackPlayer.getWins());
                                 player.sendMessage(ChatColor.RED + "Losses: " +ChatColor.WHITE + blackjackPlayer.getLosses());
-                                double ratio = 0;
+                                double ratio;
                                 if(blackjackPlayer.getLosses() == 0) {
                                      ratio = blackjackPlayer.getWins();
                                 } else {
@@ -85,19 +86,21 @@ public class BlackjackCommand implements CommandExecutor {
 
                     // search up if they already have an on-going game
                     boolean noOtherGames = true;
-                    for(BlackjackGame game : plugin.getCurrentGames()){
-                        if(game.getPlayer().getUniqueId().equals(player.getUniqueId())){
-                            // they have an ongoing game
-                            noOtherGames = false;
-                            player.sendMessage(ChatColor.GRAY + "Opening previous game. . .");
-                            new BukkitRunnable(){
-                                @Override
-                                public void run(){
-                                    player.openInventory(game.getInventory(true));
-                                    IntStream.range(0, 25).forEach(i -> player.sendMessage(""));
+                    if(plugin.getSessionFor(player.getUniqueId()) != null) {
+                        for (BlackjackGame game : plugin.getSessionFor(player.getUniqueId()).getGames()) {
+                            if (game.getPlayer().getUniqueId().equals(player.getUniqueId()) && game.getResult() == Double.MAX_VALUE) {
+                                // they have an ongoing game
+                                noOtherGames = false;
+                                player.sendMessage(ChatColor.GRAY + "Opening previous game. . .");
+                                new BukkitRunnable() {
+                                    @Override
+                                    public void run() {
+                                        player.openInventory(game.getInventory(true));
+                                        IntStream.range(0, 25).forEach(i -> player.sendMessage(""));
 
-                                }
-                            }.runTaskLater(plugin, 60);
+                                    }
+                                }.runTaskLater(plugin, 60);
+                            }
                         }
                     }
                     if(plugin.isOverflow()) {
@@ -117,10 +120,17 @@ public class BlackjackCommand implements CommandExecutor {
                         }
                     }
                     if(noOtherGames) {
+                        if(plugin.getSessionFor(player.getUniqueId()) != null){
+                            // they have a session already
+                            GameSession session= plugin.getSessionFor(player.getUniqueId());
+                            session.showEndMenu(session.getGames().get(session.getGames().size()-1));
+                            return true;
+                        }
 
                         BlackjackGame game = new BlackjackGame(player, betAmount);
+                        GameSession session = new GameSession(player.getUniqueId(), game);
                         EconomyResponse er = Blackjack.getEconomy().withdrawPlayer(player, betAmount);
-                        plugin.getCurrentGames().add(game);
+                        plugin.getSessions().add(session);
                         player.openInventory(game.getInventory(true));
                         if(plugin.getConfig().getBoolean("custom-command")){
                             Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), plugin.getConfig().getString("command").replace("$amount$", betAmount+""));
@@ -129,22 +139,30 @@ public class BlackjackCommand implements CommandExecutor {
 
                 } else {
                     boolean noOtherGames = true;
-                    for(BlackjackGame game : plugin.getCurrentGames()){
-                        if(game.getPlayer().getUniqueId().equals(player.getUniqueId())){
-                            // they have an ongoing game
-                            noOtherGames = false;
-                            player.sendMessage(ChatColor.GRAY + "Opening previous game. . .");
-                            new BukkitRunnable(){
-                                @Override
-                                public void run(){
-                                    player.openInventory(game.getInventory(true));
-                                    IntStream.range(0, 25).forEach(i -> player.sendMessage(""));
+                    if(plugin.getSessionFor(player.getUniqueId()) != null) {
+                        for (BlackjackGame game : plugin.getSessionFor(player.getUniqueId()).getGames()) {
+                            if (game.getPlayer().getUniqueId().equals(player.getUniqueId()) && game.getResult() == Double.MAX_VALUE) {
+                                // they have an ongoing game
+                                noOtherGames = false;
+                                player.sendMessage(ChatColor.GRAY + "Opening previous game. . .");
+                                new BukkitRunnable() {
+                                    @Override
+                                    public void run() {
+                                        player.openInventory(game.getInventory(true));
+                                        IntStream.range(0, 25).forEach(i -> player.sendMessage(""));
 
-                                }
-                            }.runTaskLater(plugin, 60);
+                                    }
+                                }.runTaskLater(plugin, 60);
+                            }
                         }
                     }
                     if(noOtherGames) {
+                        if(plugin.getSessionFor(player.getUniqueId()) != null){
+                            // they have a session already
+                            GameSession session= plugin.getSessionFor(player.getUniqueId());
+                            session.showEndMenu(session.getGames().get(session.getGames().size()-1));
+                            return true;
+                        }
                         player.sendMessage(plugin.getString("incorrect-args"));
                     }
                     return true;

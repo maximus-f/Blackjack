@@ -3,6 +3,7 @@ package me.perotin.blackjack.events;
 import me.perotin.blackjack.Blackjack;
 import me.perotin.blackjack.objects.BlackjackGame;
 import me.perotin.blackjack.objects.BlackjackPlayer;
+import me.perotin.blackjack.objects.GameSession;
 import me.perotin.blackjack.util.ItemBuilder;
 import me.perotin.blackjack.util.XMaterial;
 import org.bukkit.Bukkit;
@@ -81,20 +82,25 @@ public class BlackjackInventoryClickEvent implements Listener {
             BlackjackPlayer player = plugin.getPlayerFor(clicker);
 
             BlackjackGame currentGame = null;
-            for (BlackjackGame game : plugin.getCurrentGames()) {
-                if (game.getPlayer().getUniqueId().equals(clicker.getUniqueId())) {
-                    // same player
-                    String name = plugin.getString("menu-title").replace("$number$", ""+game.getBetAmount());
-                    if (event.getView().getTitle().equals(name)) {
-                        // same inventory, its safe to say its a game click
-                        currentGame = game;
+            GameSession session = null;
+            if(plugin.getSessionFor(clicker.getUniqueId()) != null) {
+                for (BlackjackGame game : plugin.getSessionFor(clicker.getUniqueId()).getGames()) {
+                    if (game.getPlayer().getUniqueId().equals(clicker.getUniqueId())) {
+                        // same player
+                        String name = plugin.getString("menu-title").replace("$number$", "" + game.getBetAmount());
+                        if (event.getView().getTitle().equals(name)) {
+                            // same inventory, its safe to say its a game click
+                            currentGame = game;
+                            session = plugin.getSessionFor(clicker.getUniqueId());
+                        }
+
+
                     }
-
-
                 }
             }
 
-            if (currentGame != null) {
+
+            if (currentGame != null && session != null) {
                 event.setCancelled(true);
                 ItemStack item = event.getCurrentItem();
                 if (item != null && item.getType() != XMaterial.AIR.parseMaterial()) {
@@ -113,7 +119,7 @@ public class BlackjackInventoryClickEvent implements Listener {
                     }
                     if (item.getType() == XMaterial.OAK_DOOR.parseMaterial() && item.getItemMeta().getDisplayName().equals(plugin.getString("surrender-item"))) {
                         // they surrender
-                        currentGame.endGame(BlackjackGame.Ending.SURRENDER);
+                        session.endGame(currentGame,BlackjackGame.Ending.SURRENDER);
 
                     }
 
@@ -123,7 +129,7 @@ public class BlackjackInventoryClickEvent implements Listener {
                         int score = currentGame.getScoreUnder21(currentGame.getPlayerCards());
                         if (score > 21) {
                             // they lose
-                            currentGame.endGame(BlackjackGame.Ending.LOSE);
+                            session.endGame(currentGame,BlackjackGame.Ending.LOSE);
                             player.addLoss();
                             return;
                         }
@@ -146,19 +152,19 @@ public class BlackjackInventoryClickEvent implements Listener {
                             }
                             // end game logic
                             if (houseScore > 21) {
-                                currentGame.endGame(BlackjackGame.Ending.WIN);
+                                session.endGame(currentGame,BlackjackGame.Ending.WIN);
                                 player.addWin();
                             } else if (houseScore > playerScore) {
                                 // house wins
                                 player.addLoss();
-                                currentGame.endGame(BlackjackGame.Ending.LOSE);
+                                session.endGame(currentGame,BlackjackGame.Ending.LOSE);
                             } else if (playerScore > houseScore) {
                                 // player wins
-                                currentGame.endGame(BlackjackGame.Ending.WIN);
+                                session.endGame(currentGame,BlackjackGame.Ending.WIN);
                                 player.addWin();
                             } else if (playerScore == houseScore) {
                                 // tie
-                                currentGame.endGame(BlackjackGame.Ending.TIE);
+                                session.endGame(currentGame,BlackjackGame.Ending.TIE);
                             }
 
                         } else {
@@ -176,19 +182,19 @@ public class BlackjackInventoryClickEvent implements Listener {
                                 }
                                 if (houseScore > 21) {
                                     // house lose
-                                    currentGame.endGame(BlackjackGame.Ending.WIN);
+                                    session.endGame(currentGame,BlackjackGame.Ending.WIN);
                                     player.addWin();
                                 } else if (houseScore > playerScore) {
                                     // house wins
-                                    currentGame.endGame(BlackjackGame.Ending.LOSE);
+                                    session.endGame(currentGame,BlackjackGame.Ending.LOSE);
                                     player.addLoss();
                                 } else if (playerScore > houseScore) {
                                     // player wins
-                                    currentGame.endGame(BlackjackGame.Ending.WIN);
+                                    session.endGame(currentGame,BlackjackGame.Ending.WIN);
                                     player.addWin();
                                 } else if (playerScore == houseScore) {
                                     // tie
-                                    currentGame.endGame(BlackjackGame.Ending.TIE);
+                                    session.endGame(currentGame,BlackjackGame.Ending.TIE);
                                 }
 
                             } else {
@@ -205,19 +211,19 @@ public class BlackjackInventoryClickEvent implements Listener {
                                     }
                                     if (houseScore > 21) {
                                         // house lose
-                                        currentGame.endGame(BlackjackGame.Ending.WIN);
+                                        session.endGame(currentGame,BlackjackGame.Ending.WIN);
                                         player.addWin();
                                     } else if (houseScore > playerScore) {
                                         // house wins
-                                        currentGame.endGame(BlackjackGame.Ending.LOSE);
+                                        session.endGame(currentGame,BlackjackGame.Ending.LOSE);
                                         player.addLoss();
                                     } else if (playerScore > houseScore) {
                                         // player wins
-                                        currentGame.endGame(BlackjackGame.Ending.WIN);
+                                        session.endGame(currentGame,BlackjackGame.Ending.WIN);
                                         player.addWin();
                                     } else if (playerScore == houseScore) {
                                         // tie
-                                        currentGame.endGame(BlackjackGame.Ending.TIE);
+                                        session.endGame(currentGame,BlackjackGame.Ending.TIE);
                                     }
                                 } else {
                                     currentGame.getNextCard();
@@ -234,21 +240,21 @@ public class BlackjackInventoryClickEvent implements Listener {
                                         }
                                         if (houseScore > 21) {
                                             // house lose
-                                            currentGame.endGame(BlackjackGame.Ending.WIN);
+                                            session.endGame(currentGame,BlackjackGame.Ending.WIN);
                                             player.addWin();
 
                                         } else if (houseScore > playerScore) {
                                             // house wins
-                                            currentGame.endGame(BlackjackGame.Ending.LOSE);
+                                            session.endGame(currentGame,BlackjackGame.Ending.LOSE);
                                             player.addLoss();
                                         } else if (playerScore > houseScore) {
                                             // player wins
-                                            currentGame.endGame(BlackjackGame.Ending.WIN);
+                                            session.endGame(currentGame,BlackjackGame.Ending.WIN);
                                             player.addWin();
 
                                         } else if (playerScore == houseScore) {
                                             // tie
-                                            currentGame.endGame(BlackjackGame.Ending.TIE);
+                                            session.endGame(currentGame,BlackjackGame.Ending.TIE);
                                         }
                                     }
                                 }

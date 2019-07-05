@@ -4,9 +4,11 @@ import me.perotin.blackjack.commands.BlackjackAdminCommand;
 import me.perotin.blackjack.commands.BlackjackCommand;
 import me.perotin.blackjack.events.BlackjackInventoryClickEvent;
 import me.perotin.blackjack.events.BlackjackJoinEvent;
+import me.perotin.blackjack.events.BlackjackSessionClickEvent;
 import me.perotin.blackjack.objects.BlackFile;
 import me.perotin.blackjack.objects.BlackjackGame;
 import me.perotin.blackjack.objects.BlackjackPlayer;
+import me.perotin.blackjack.objects.GameSession;
 import me.perotin.blackjack.util.Metrics;
 import me.perotin.blackjack.util.UpdateChecker;
 import net.milkbowl.vault.economy.Economy;
@@ -16,16 +18,22 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static me.perotin.blackjack.objects.BlackFile.BlackFilesType.STATS;
 
 /* Created by Perotin on 12/24/18 */
 public class Blackjack extends JavaPlugin {
 
+    /*
+    TODO
+Change bet amount menu
+     */
+
     private static Blackjack instance;
-    private HashSet<BlackjackGame> currentGames;
+   // private HashSet<BlackjackGame> currentGames;
+    private HashSet<GameSession> sessions;
     private static Economy econ = null;
     private boolean overFlow;
     private boolean cash;
@@ -48,6 +56,7 @@ public class Blackjack extends JavaPlugin {
     public void onEnable(){
         Metrics metrics = new Metrics(this);
         this.serverWins = 0;
+        this.sessions = new HashSet<>();
         this.games = 0;
         this.serverLosses = 0;
         this.surrender = getConfig().getBoolean("enable-surrender");
@@ -55,7 +64,7 @@ public class Blackjack extends JavaPlugin {
 
         new UpdateChecker(this).checkForUpdate();
         setupEconomy();
-        currentGames = new HashSet<>();
+        //currentGames = new HashSet<>();
         players = new HashSet<>();
         instance = this;
         this.taxPercent = getConfig().getDouble("tax-percent");
@@ -69,6 +78,7 @@ public class Blackjack extends JavaPlugin {
         getCommand("blackjackadmin").setExecutor(new BlackjackAdminCommand(this));
         Bukkit.getPluginManager().registerEvents(new BlackjackInventoryClickEvent(this), this);
         Bukkit.getPluginManager().registerEvents(new BlackjackJoinEvent(this), this);
+        Bukkit.getPluginManager().registerEvents(new BlackjackSessionClickEvent(this), this);
 
         this.overFlow = getConfig().getBoolean("bet-overflow");
         BlackFile.loadFiles();
@@ -77,6 +87,10 @@ public class Blackjack extends JavaPlugin {
             players.add(BlackjackPlayer.loadPlayer(player));
         }
 
+    }
+
+    public HashSet<GameSession> getSessions() {
+        return sessions;
     }
 
     public boolean isSurrenderEnabled() {
@@ -170,6 +184,25 @@ public class Blackjack extends JavaPlugin {
         return null;
 
     }
+
+    public GameSession getSessionFor(BlackjackGame game){
+        for(GameSession s : getSessions()){
+            for(BlackjackGame g : s.getGames()){
+                if(g.getUuid().equals(game.getUuid())){
+                    return s;
+                }
+
+            }
+        }
+        return null;
+    }
+
+    public GameSession getSessionFor(UUID uuid){
+        for(GameSession game : getSessions()){
+            if(game.getUuid().equals(uuid)) return game;
+        }
+        return null;
+    }
     public Set<BlackjackPlayer> getPlayers() {
         return players;
     }
@@ -183,9 +216,9 @@ public class Blackjack extends JavaPlugin {
     }
     public static Blackjack getInstance() {return instance;}
 
-    public HashSet<BlackjackGame> getCurrentGames(){
-        return this.currentGames;
-    }
+
+
+
     public  String getString(String path){
         return ChatColor.translateAlternateColorCodes('&', getConfig().getString(path));
     }
