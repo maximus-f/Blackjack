@@ -129,7 +129,7 @@ public class BlackjackInventoryClickEvent implements Listener {
                         int score = currentGame.getScoreUnder21(currentGame.getPlayerCards());
                         if (score > 21) {
                             // they lose
-                            session.endGame(currentGame,BlackjackGame.Ending.LOSE);
+                            session.endGame(currentGame, BlackjackGame.Ending.LOSE);
                             player.addLoss();
                             return;
                         }

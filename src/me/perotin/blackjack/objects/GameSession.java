@@ -170,6 +170,8 @@ public class GameSession {
     public void startNewGame(){
         BlackjackGame game = new BlackjackGame(getPlayer(), betAmount);
         getGames().add(game);
+        EconomyResponse er = Blackjack.getEconomy().withdrawPlayer(getPlayer(), betAmount);
+
         getPlayer().openInventory(game.getInventory(true));
 
     }
