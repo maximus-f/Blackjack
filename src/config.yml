@@ -25,6 +25,9 @@ enable-surrender: true
 # What percentage of the bet should the server take? (1-99)
 surrender-percentage-to-take: 50.0
 
+# Disable the change bet buttons? (Players cannot change their amount in the bet)
+enable-change-bet: true
+
 # One user requested this, basically, it'll run the specified command below when each round of blackjack starts. If you want
 # to use this, then set the below to 'true' and specify your command.
 custom-command: false

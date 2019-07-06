@@ -168,11 +168,17 @@ public class GameSession {
     }
 
     public void startNewGame(){
-        BlackjackGame game = new BlackjackGame(getPlayer(), betAmount);
-        getGames().add(game);
-        EconomyResponse er = Blackjack.getEconomy().withdrawPlayer(getPlayer(), betAmount);
+        if(Blackjack.getEconomy().getBalance(getPlayer()) >= betAmount) {
+            BlackjackGame game = new BlackjackGame(getPlayer(), betAmount);
+            getGames().add(game);
+            EconomyResponse er = Blackjack.getEconomy().withdrawPlayer(getPlayer(), betAmount);
 
-        getPlayer().openInventory(game.getInventory(true));
+            getPlayer().openInventory(game.getInventory(true));
+        } else {
+            getPlayer().closeInventory();
+            endSession();
+            getPlayer().sendMessage(Blackjack.getInstance().getString("cannot-bet-that-much"));
+        }
 
     }
 
@@ -210,14 +216,19 @@ public class GameSession {
         .replace("$amount$", getTotalEarnings()+""));
         menu.setItem(4, totalEarnings.build());
 
-        menu.setItem(19, new ItemBuilder(XMaterial.DANDELION.parseItem().getType()).name(ChatColor.RED + "-1000").build());
-        menu.setItem(20, new ItemBuilder(XMaterial.DANDELION.parseItem().getType()).name(ChatColor.RED + "-100").build());
-        menu.setItem(21, new ItemBuilder(XMaterial.DANDELION.parseItem().getType()).name(ChatColor.RED + "-10").build());
+        if(Blackjack.getInstance().getConfig().getBoolean("enable-change-bet")) {
+            menu.setItem(19, new ItemBuilder(XMaterial.DANDELION.parseItem().getType()).name(ChatColor.RED + "-1000").build());
+            menu.setItem(20, new ItemBuilder(XMaterial.DANDELION.parseItem().getType()).name(ChatColor.RED + "-100").build());
+            menu.setItem(21, new ItemBuilder(XMaterial.DANDELION.parseItem().getType()).name(ChatColor.RED + "-10").build());
 
-        menu.setItem(23, new ItemBuilder(XMaterial.DANDELION.parseItem().getType()).name(ChatColor.GREEN + "+10").build());
-        menu.setItem(24, new ItemBuilder(XMaterial.DANDELION.parseItem().getType()).name(ChatColor.GREEN + "+100").build());
-        menu.setItem(25, new ItemBuilder(XMaterial.DANDELION.parseItem().getType()).name(ChatColor.GREEN + "+1000").build());
-        menu.setItem(22, new ItemBuilder(XMaterial.BOOK.parseMaterial()).name(ChatColor.YELLOW + "Change bet amount!").lore(ChatColor.GRAY + "$"+betAmount).build());
+            menu.setItem(23, new ItemBuilder(XMaterial.DANDELION.parseItem().getType()).name(ChatColor.GREEN + "+10").build());
+            menu.setItem(24, new ItemBuilder(XMaterial.DANDELION.parseItem().getType()).name(ChatColor.GREEN + "+100").build());
+            menu.setItem(25, new ItemBuilder(XMaterial.DANDELION.parseItem().getType()).name(ChatColor.GREEN + "+1000").build());
+            menu.setItem(22, new ItemBuilder(XMaterial.BOOK.parseMaterial()).name(ChatColor.YELLOW + "Change bet amount!").lore(ChatColor.GRAY + "$" + betAmount).build());
+        } else {
+            menu.setItem(22, new ItemBuilder(XMaterial.BOOK.parseMaterial()).name(ChatColor.YELLOW + "Your bet amount!").lore(ChatColor.GRAY + "$" + betAmount).build());
+
+        }
 
         game.getPlayer().openInventory(menu);
     }
