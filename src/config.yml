@@ -33,11 +33,18 @@ enable-change-bet: true
 custom-command: false
 command: "/Example $amount$"
 
+# Should there be a multiplier for Blackjack (score of 21)?
+enable-multiplier: true
+
+# What should the bet amount be multiplied to for blackjacks?
+multiplier: 1.5
+
 # Messages used in plugin
 number-or-player: "&cIncorrect args! /blackjack <amount> or /blackjack <player>"
 no-permission: "&cYou do not have permissions to do this!"
 menu-title: "Blackjack: Betting $number$"
 blackjack-dealer: "&8&lDealer"
+blackjack-win: "&0&lBlack&4&lJack! &7&o($amount$x) "
 dealer-lore: "&7&oHit or Stand?"
 dealer-cards: "&eDealer cards ==>"
 player-cards: "&eYour cards ==>"
@@ -74,3 +81,6 @@ keep-playing: "&aKeep playing?"
 stop-playing: "&cExit Session?"
 total-earnings: "&eTotal earnings: $amount$"
 session-ending: "&eAfter $amount$ games, you resulted in $$outcome$!"
+change-bet-amount: "&eChange bet amount"
+your-bet-amount: "&eYour bet amount"
+continue-playing: "Continue playing, $player$?"

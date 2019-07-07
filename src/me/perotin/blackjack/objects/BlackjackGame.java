@@ -257,11 +257,22 @@ public class BlackjackGame {
             switch (end){
                 case TIE: return 0;
                 case WIN:
+                    int playerScore = getScoreUnder21(getPlayerCards());
+
                     if(plugin.getTaxPercent() != 0.0 && plugin.getTaxPercent() <= 100.0) {
                         double tax = plugin.getTaxPercent() / 100.0;
                         double postTax = betAmount - (tax * betAmount);
-                        return postTax;
-                    } else return betAmount;
+                        if(playerScore == 21 && plugin.getBlackJackMultiplier() > 1) {
+                            return plugin.getBlackJackMultiplier() * postTax;
+                        }
+                            return postTax;
+                    } else {
+                        if(playerScore == 21 && plugin.getBlackJackMultiplier() > 1) {
+                            return plugin.getBlackJackMultiplier() * betAmount;
+
+                        }
+                            return betAmount;
+                    }
                 case LOSE:
                     return -betAmount;
                 case SURRENDER:

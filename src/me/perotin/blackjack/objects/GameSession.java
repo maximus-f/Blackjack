@@ -9,8 +9,11 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.IntStream;
@@ -81,41 +84,40 @@ public class GameSession {
        Blackjack.getInstance().getSessions().remove(this);
     }
 
-//    public void showBetChangeMenu(Player player){
-//        Inventory menu = Bukkit.createInventory(null, 27, "Change bet amount...");
-//        // setting clickers
-//        menu.setItem(10, new ItemBuilder(XMaterial.DANDELION.parseItem().getType()).name(ChatColor.RED + "-1000").build());
-//        menu.setItem(11, new ItemBuilder(XMaterial.DANDELION.parseItem().getType()).name(ChatColor.RED + "-100").build());
-//        menu.setItem(12, new ItemBuilder(XMaterial.DANDELION.parseItem().getType()).name(ChatColor.RED + "-10").build());
-//
-//        menu.setItem(14, new ItemBuilder(XMaterial.DANDELION.parseItem().getType()).name(ChatColor.GREEN + "+10").build());
-//        menu.setItem(15, new ItemBuilder(XMaterial.DANDELION.parseItem().getType()).name(ChatColor.GREEN + "+100").build());
-//        menu.setItem(16, new ItemBuilder(XMaterial.DANDELION.parseItem().getType()).name(ChatColor.GREEN + "+1000").build());
-//        menu.setItem(13, new ItemBuilder(XMaterial.ARROW.parseMaterial()).name(ChatColor.YELLOW + "Play next game!").lore(ChatColor.GRAY + "$"+betAmount).build());
-//
-//        player.openInventory(menu);
-//        BlackjackSessionClickEvent.changingAmount.put(player.getUniqueId(), menu);
-//
-//    }
 
     public void endGame(BlackjackGame game, BlackjackGame.Ending end) {
         Blackjack plugin = Blackjack.getInstance();
-//        player.sendMessage(plugin.getString("end-game")
-//                .replace("$score$", getScoreUnder21(getPlayerCards()) + "")
-//                .replace("$score2$", getScoreUnder21(getHouseCards()) + ""));
+        getPlayer().sendMessage(plugin.getString("end-game")
+                .replace("$score$", game.getScoreUnder21(game.getPlayerCards()) + "")
+                .replace("$score2$", game.getScoreUnder21(game.getHouseCards()) + ""));
         game.setEnd(end);
         double betAmount = game.getBetAmount();
         Player player = game.getPlayer();
+        int playerScore = game.getScoreUnder21(game.getPlayerCards());
+        double multiplierAmount = (plugin.getBlackJackMultiplier() * betAmount) + betAmount;
+        boolean blackJack = false;
         if (end == BlackjackGame.Ending.WIN) {
             EconomyResponse er;
             boolean taxxed = false;
             if (plugin.getTaxPercent() != 0.0 && plugin.getTaxPercent() <= 100.0) {
                 double tax = plugin.getTaxPercent() / 100.0;
                 double postTax = betAmount - (tax * betAmount);
-                er = Blackjack.getEconomy().depositPlayer(player, postTax + betAmount);
+                if(playerScore == 21 && plugin.getBlackJackMultiplier() > 1) {
+                    blackJack = true;
+                    er = Blackjack.getEconomy().depositPlayer(player, (plugin.getBlackJackMultiplier()*postTax) + betAmount);
+                } else {
+                    er = Blackjack.getEconomy().depositPlayer(player, postTax + betAmount);
+
+                }
                 taxxed = true;
             } else {
-                er = Blackjack.getEconomy().depositPlayer(player, betAmount + betAmount);
+                if(playerScore == 21 && plugin.getBlackJackMultiplier() > 1) {
+                    blackJack = true;
+                    er = Blackjack.getEconomy().depositPlayer(player, multiplierAmount);
+                } else {
+                    er = Blackjack.getEconomy().depositPlayer(player, betAmount + betAmount);
+
+                }
 
             }
 
@@ -124,16 +126,25 @@ public class GameSession {
 //                    .replace("$result$", plugin.getString("won"))
 //                    .replace("$number$", earnings + ""));
 
-            plugin.setServerImpact(plugin.getServerImpact() - betAmount);
+            if(blackJack) {
+                plugin.setServerImpact(plugin.getServerImpact() - (plugin.getBlackJackMultiplier()* betAmount));
+            } else plugin.setServerImpact(plugin.getServerImpact() - betAmount);
+
             plugin.increaseGamesPlayed();
             plugin.increaseServerLosses();
             if (er.transactionSuccess()) {
                 if (taxxed) {
                     double tax = plugin.getTaxPercent() / 100.0;
-                    //  player.sendMessage(plugin.getString("taxxed").replace("$amount$", postTax+""));
-                } else {
-                    player.sendMessage(ChatColor.GREEN + "+" + betAmount);
+                    double postTax = tax * betAmount;
 
+                    player.sendMessage(plugin.getString("taxxed").replace("$amount$", postTax+""));
+                } else {
+                    if(blackJack){
+                    player.sendMessage(plugin.getString("blackjack-win").replace("$amount$", plugin.getConfig().getDouble("multiplier")+"")+
+                            ChatColor.GREEN + "+" + (plugin.getBlackJackMultiplier() * betAmount));
+                } else {
+                        player.sendMessage( ChatColor.GREEN + "+"  + betAmount);
+                    }
                 }
             }
         } else if (end == BlackjackGame.Ending.LOSE) {
@@ -141,9 +152,11 @@ public class GameSession {
 //            player.sendMessage(plugin.getString("earnings")
 //                    .replace("$result$", plugin.getString("lost"))
 //                    .replace("$number$", getBetAmount() + ""));
-//            plugin.setServerImpact(plugin.getServerImpact() + betAmount);
+            plugin.setServerImpact(plugin.getServerImpact() + betAmount);
             plugin.increaseGamesPlayed();
             plugin.increaseServerWins();
+            player.sendMessage( ChatColor.RED + "-"  + betAmount);
+
 
         } else if (end == BlackjackGame.Ending.TIE) {
             // tie
@@ -160,6 +173,8 @@ public class GameSession {
             plugin.setServerImpact(plugin.getServerImpact() + surrender);
             plugin.increaseGamesPlayed();
             plugin.increaseServerWins();
+            player.sendMessage( ChatColor.RED + "-"  + surrender);
+
 
         }
 
@@ -184,17 +199,78 @@ public class GameSession {
 
     public void showEndMenu(BlackjackGame game){
         Blackjack plugin = Blackjack.getInstance();
+        List<Integer> decoSpots = new ArrayList<>();
+        IntStream.range(0, 10).forEach(decoSpots::add);
+        IntStream.range(27, 36).forEach(decoSpots::add);
+        decoSpots.addAll(Arrays.asList(18, 17, 26));
+        decoSpots.remove(5);
+        decoSpots.remove(4);
+        decoSpots.remove(3);
+
+
 
         Inventory menu = Bukkit.createInventory(null, 36, "Continue playing, " +game.getPlayer().getName()+"?");
         IntStream.range(0, 10).forEach(i -> menu.setItem(i, new ItemBuilder(XMaterial.BLACK_STAINED_GLASS_PANE.parseItem().getType()).name("").build()));
         IntStream.range(27, 36).forEach(i -> menu.setItem(i, new ItemBuilder(XMaterial.BLACK_STAINED_GLASS_PANE.parseItem().getType()).name("").build()));
-        menu.setItem(18, new ItemBuilder(XMaterial.BLACK_STAINED_GLASS_PANE.parseMaterial()).name("").build());
-        menu.setItem(27, new ItemBuilder(XMaterial.BLACK_STAINED_GLASS_PANE.parseMaterial()).name("").build());
-        menu.setItem(17, new ItemBuilder(XMaterial.BLACK_STAINED_GLASS_PANE.parseMaterial()).name("").build());
-        menu.setItem(26, new ItemBuilder(XMaterial.BLACK_STAINED_GLASS_PANE.parseMaterial()).name("").build());
-        menu.setItem(3, new ItemBuilder(XMaterial.BOOKSHELF.parseMaterial()).name(ChatColor.YELLOW + "Dealer's total: " + game.getScoreUnder21(game.getHouseCards())).build());
-        menu.setItem(5, new ItemBuilder(XMaterial.BOOKSHELF.parseMaterial()).name(ChatColor.YELLOW + "Your total: " + game.getScoreUnder21(game.getPlayerCards())).build());
+        menu.setItem(18, new ItemBuilder(XMaterial.BLACK_STAINED_GLASS_PANE.parseMaterial()).name(" ").build());
+        menu.setItem(27, new ItemBuilder(XMaterial.BLACK_STAINED_GLASS_PANE.parseMaterial()).name(" ").build());
+        menu.setItem(17, new ItemBuilder(XMaterial.BLACK_STAINED_GLASS_PANE.parseMaterial()).name(" ").build());
+        menu.setItem(26, new ItemBuilder(XMaterial.BLACK_STAINED_GLASS_PANE.parseMaterial()).name(" ").build());
+        menu.setItem(3, new ItemBuilder(XMaterial.BOOKSHELF.parseMaterial()).name(plugin.getString("dealer-cards") + game.getScoreUnder21(game.getHouseCards())).build());
+        menu.setItem(5, new ItemBuilder(XMaterial.BOOKSHELF.parseMaterial()).name(plugin.getString("player-cards") + game.getScoreUnder21(game.getPlayerCards())).build());
 
+        //if(game.getScoreUnder21(game.getPlayerCards()) == 21 && game.getResult() > 0){
+            //blackjack
+            BukkitRunnable runnable = new BukkitRunnable() {
+                int counter = 0;
+
+                @Override
+                public void run() {
+                    int innerCounter = 0;
+                    for(int i : decoSpots){
+                        if(counter % 2 == 0){
+                            if(innerCounter % 2 == 0) {
+                                menu.setItem(i, new ItemBuilder(XMaterial.RED_STAINED_GLASS_PANE.parseItem()).name(ChatColor.AQUA + "BLACKJACK").build());
+                                innerCounter++;
+                                if(decoSpots.get(decoSpots.size() - 1) == i)  counter++;
+                            } else {
+
+                                menu.setItem(i, new ItemBuilder(XMaterial.BLACK_STAINED_GLASS_PANE.parseItem()).name(ChatColor.AQUA + "BLACKJACK").build());
+                                innerCounter++;
+                                if(decoSpots.get(decoSpots.size() - 1) == i)   counter++;
+
+                            }
+                        } else {
+                            if(innerCounter % 2 == 0) {
+
+                                menu.setItem(i, new ItemBuilder(XMaterial.BLACK_STAINED_GLASS_PANE.parseItem()).name(ChatColor.AQUA + "BLACKJACK").build());
+                                innerCounter++;
+                                if(decoSpots.get(decoSpots.size() - 1) == i) counter++;
+
+                            } else {
+
+                                menu.setItem(i, new ItemBuilder(XMaterial.RED_STAINED_GLASS_PANE.parseItem()).name(ChatColor.AQUA + "BLACKJACK").build());
+                                innerCounter++;
+                                if(decoSpots.get(decoSpots.size() - 1) == i) counter++;
+
+                            }
+                        }
+
+                    }
+
+                }
+            };
+
+            runnable.runTaskTimer(plugin, 0, 20);
+            BukkitTask cancel = new BukkitRunnable() {
+                @Override
+                public void run() {
+                    runnable.cancel();
+                }
+            }.runTaskLater(plugin, 20*20);
+
+
+        //}
 
 
 
@@ -217,16 +293,16 @@ public class GameSession {
         menu.setItem(4, totalEarnings.build());
 
         if(Blackjack.getInstance().getConfig().getBoolean("enable-change-bet")) {
-            menu.setItem(19, new ItemBuilder(XMaterial.DANDELION.parseItem().getType()).name(ChatColor.RED + "-1000").build());
-            menu.setItem(20, new ItemBuilder(XMaterial.DANDELION.parseItem().getType()).name(ChatColor.RED + "-100").build());
-            menu.setItem(21, new ItemBuilder(XMaterial.DANDELION.parseItem().getType()).name(ChatColor.RED + "-10").build());
+            menu.setItem(19, new ItemBuilder(XMaterial.SUNFLOWER.parseItem().getType()).name(ChatColor.RED + "-1000").build());
+            menu.setItem(20, new ItemBuilder(XMaterial.SUNFLOWER.parseItem().getType()).name(ChatColor.RED + "-100").build());
+            menu.setItem(21, new ItemBuilder(XMaterial.SUNFLOWER.parseItem().getType()).name(ChatColor.RED + "-10").build());
 
-            menu.setItem(23, new ItemBuilder(XMaterial.DANDELION.parseItem().getType()).name(ChatColor.GREEN + "+10").build());
-            menu.setItem(24, new ItemBuilder(XMaterial.DANDELION.parseItem().getType()).name(ChatColor.GREEN + "+100").build());
-            menu.setItem(25, new ItemBuilder(XMaterial.DANDELION.parseItem().getType()).name(ChatColor.GREEN + "+1000").build());
-            menu.setItem(22, new ItemBuilder(XMaterial.BOOK.parseMaterial()).name(ChatColor.YELLOW + "Change bet amount!").lore(ChatColor.GRAY + "$" + betAmount).build());
+            menu.setItem(23, new ItemBuilder(XMaterial.SUNFLOWER.parseItem().getType()).name(ChatColor.GREEN + "+10").build());
+            menu.setItem(24, new ItemBuilder(XMaterial.SUNFLOWER.parseItem().getType()).name(ChatColor.GREEN + "+100").build());
+            menu.setItem(25, new ItemBuilder(XMaterial.SUNFLOWER.parseItem().getType()).name(ChatColor.GREEN + "+1000").build());
+            menu.setItem(22, new ItemBuilder(XMaterial.BOOK.parseMaterial()).name(plugin.getString("change-bet-amount", ChatColor.YELLOW + "Change bet amount!")).lore(ChatColor.GRAY + "$" + betAmount).build());
         } else {
-            menu.setItem(22, new ItemBuilder(XMaterial.BOOK.parseMaterial()).name(ChatColor.YELLOW + "Your bet amount!").lore(ChatColor.GRAY + "$" + betAmount).build());
+            menu.setItem(22, new ItemBuilder(XMaterial.BOOK.parseMaterial()).name(plugin.getString("your-bet-amount", ChatColor.YELLOW + "Your bet amount!")).lore(ChatColor.GRAY + "$" + betAmount).build());
 
         }
 

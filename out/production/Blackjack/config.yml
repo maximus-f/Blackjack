@@ -25,16 +25,26 @@ enable-surrender: true
 # What percentage of the bet should the server take? (1-99)
 surrender-percentage-to-take: 50.0
 
+# Disable the change bet buttons? (Players cannot change their amount in the bet)
+enable-change-bet: true
+
 # One user requested this, basically, it'll run the specified command below when each round of blackjack starts. If you want
 # to use this, then set the below to 'true' and specify your command.
 custom-command: false
 command: "/Example $amount$"
+
+# Should there be a multiplier for Blackjack (score of 21)?
+enable-multiplier: true
+
+# What should the bet amount be multiplied to for blackjacks?
+multiplier: 1.5
 
 # Messages used in plugin
 number-or-player: "&cIncorrect args! /blackjack <amount> or /blackjack <player>"
 no-permission: "&cYou do not have permissions to do this!"
 menu-title: "Blackjack: Betting $number$"
 blackjack-dealer: "&8&lDealer"
+blackjack-win: "&0&lBlack&4&lJack! &7&o($amount$x) "
 dealer-lore: "&7&oHit or Stand?"
 dealer-cards: "&eDealer cards ==>"
 player-cards: "&eYour cards ==>"
@@ -71,3 +81,6 @@ keep-playing: "&aKeep playing?"
 stop-playing: "&cExit Session?"
 total-earnings: "&eTotal earnings: $amount$"
 session-ending: "&eAfter $amount$ games, you resulted in $$outcome$!"
+change-bet-amount: "&eChange bet amount"
+your-bet-amount: "&eYour bet amount"
+continue-playing: "Continue playing, $player$?"

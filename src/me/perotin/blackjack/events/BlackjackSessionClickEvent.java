@@ -11,6 +11,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashMap;
 import java.util.UUID;
@@ -40,10 +41,11 @@ public class BlackjackSessionClickEvent implements Listener {
                     if(clicked != null && clicked.hasItemMeta()) {
                         if (clicked.getType() == XMaterial.REDSTONE.parseItem().getType()) {
                             session.endSession();
-                            return;
+
                         } else if (clicked.getType() == XMaterial.EMERALD.parseItem().getType()) {
                             session.startNewGame();
-                        } else if (clicked.getType() == XMaterial.DANDELION.parseMaterial()) {
+
+                        } else if (clicked.getType() == XMaterial.SUNFLOWER.parseMaterial()) {
                             String changeAmount = event.getCurrentItem().getItemMeta().getDisplayName();
                             changeAmount = ChatColor.stripColor(changeAmount);
                             changeAmount = changeAmount.charAt(0) == '+' ? ChatColor.stripColor(changeAmount.substring(1)) : ChatColor.stripColor(changeAmount);
@@ -55,6 +57,7 @@ public class BlackjackSessionClickEvent implements Listener {
                             if(betMin > 0 &&session.getBetAmount()+change < betMin) return;
 
                             session.setBetAmount(session.getBetAmount() + change);
+
                             session.showEndMenu(session.getGames().get(session.getGames().size()-1));
                         }
 

@@ -28,7 +28,17 @@ public class Blackjack extends JavaPlugin {
 
     /*
     TODO
-Change bet amount menu
+    New messages for config:
+
+    change-bet-amount: "&eChange bet amount"
+your-bet-amount: "&eYour bet amount"
+
+# Should there be a multiplier for Blackjack (score of 21)?
+enable-multiplier: true
+
+# What should the bet amount be multiplied to for blackjacks?
+multiplier: 1.5
+
      */
 
     private static Blackjack instance;
@@ -46,6 +56,7 @@ Change bet amount menu
     private double serverLosses;
     private boolean surrender;
     private double surrenderPercentage;
+    private double blackJackMultiplier;
 
     public static String[] cards = {
             "As",  "2s", "3s", "4s", "5s", "6s", "7s", "8s", "9s", "10s", "Js", "Qs", "Ks",
@@ -61,7 +72,9 @@ Change bet amount menu
         this.serverLosses = 0;
         this.surrender = getConfig().getBoolean("enable-surrender");
         this.surrenderPercentage = getConfig().getDouble("surrender-percentage-to-take");
-
+        if(getConfig().getBoolean("enable-multiplier")){
+            this.blackJackMultiplier = getConfig().getDouble("multiplier");
+        } else this.blackJackMultiplier = 0;
         new UpdateChecker(this).checkForUpdate();
         setupEconomy();
         //currentGames = new HashSet<>();
@@ -87,6 +100,11 @@ Change bet amount menu
             players.add(BlackjackPlayer.loadPlayer(player));
         }
 
+    }
+
+
+    public double getBlackJackMultiplier() {
+        return blackJackMultiplier;
     }
 
     public HashSet<GameSession> getSessions() {
@@ -218,6 +236,10 @@ Change bet amount menu
 
 
 
+
+    public  String getString(String path, String alternative){
+        return  getConfig().getString(path) != null ? ChatColor.translateAlternateColorCodes('&', getConfig().getString(path)) : alternative;
+    }
 
     public  String getString(String path){
         return ChatColor.translateAlternateColorCodes('&', getConfig().getString(path));
