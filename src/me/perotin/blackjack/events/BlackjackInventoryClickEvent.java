@@ -53,7 +53,6 @@ public class BlackjackInventoryClickEvent implements Listener {
                     }
                     clicked.setItem(x, builder.build());
 
-
                 }
 
             }
@@ -114,6 +113,19 @@ public class BlackjackInventoryClickEvent implements Listener {
                             clicker.sendMessage(ChatColor.translateAlternateColorCodes('&', s));
 
                         }
+
+                        // some weird inventory thing is happening with 41 as length of contents
+                        ItemBuilder tutorial = new ItemBuilder(XMaterial.PAPER.parseItem());
+                        tutorial.name(plugin.getString("tutorial-name"));
+
+                        Bukkit.getScheduler().runTaskLater(Blackjack.getInstance(), () -> {
+
+                            if (clicker.getOpenInventory().getBottomInventory().contains(tutorial.build())) {
+                                // people can shift click item into their inventory so remove it
+                                clicker.getInventory().remove(tutorial.build());
+
+                            }
+                        },20*2);
 
 
                     }

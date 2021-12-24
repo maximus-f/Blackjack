@@ -3,14 +3,11 @@ package me.perotin.blackjack.objects;
 import me.perotin.blackjack.Blackjack;
 import me.perotin.blackjack.util.ItemBuilder;
 import me.perotin.blackjack.util.XMaterial;
-import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
-
 
 import java.util.*;
 
@@ -211,6 +208,7 @@ public class BlackjackGame {
     }
 
     public static String convertToFullText(String card) {
+        Blackjack plugin = Blackjack.getInstance();
         String identifier = "";
         if (card.length() == 2) {
             identifier = card.substring(0, 1);
@@ -221,29 +219,29 @@ public class BlackjackGame {
         String suit = card.substring(card.length() - 1);
         switch (suit) {
             case "s":
-                suit = "Spades";
+                suit = plugin.getString("spades");
                 break;
             case "d":
-                suit = "Diamonds";
+                suit = plugin.getString("diamonds");;
                 break;
             case "h":
-                suit = "Hearts";
+                suit = plugin.getString("hearts");;
                 break;
             case "c":
-                suit = "Clubs";
+                suit = plugin.getString("clubs");;
         }
         switch (identifier) {
             case "J":
-                identifier = "Jack";
+                identifier = plugin.getString("jack");
                 break;
             case "Q":
-                identifier = "Queen";
+                identifier = plugin.getString("queen");
                 break;
             case "K":
-                identifier = "King";
+                identifier = plugin.getString("king");
                 break;
             case "A":
-                identifier = "Ace";
+                identifier = plugin.getString("ace");
         }
 
         return identifier + " of " + suit;
@@ -284,79 +282,79 @@ public class BlackjackGame {
         return Double.MAX_VALUE;
     }
 
-
-    public void endGame(Ending end) {
-        Blackjack plugin = Blackjack.getInstance();
-//        player.sendMessage(plugin.getString("end-game")
-//                .replace("$score$", getScoreUnder21(getPlayerCards()) + "")
-//                .replace("$score2$", getScoreUnder21(getHouseCards()) + ""));
-        this.end = end;
-        if (end == Ending.WIN) {
-            EconomyResponse er;
-            boolean taxxed = false;
-            double earnings = 0;
-            if(plugin.getTaxPercent() != 0.0 && plugin.getTaxPercent() <= 100.0) {
-                double tax = plugin.getTaxPercent() / 100.0;
-                double postTax = betAmount - (tax * betAmount);
-                earnings = postTax;
-                 er = Blackjack.getEconomy().depositPlayer(player, postTax + betAmount);
-                 taxxed = true;
-            } else {
-                earnings = betAmount;
-                 er = Blackjack.getEconomy().depositPlayer(player, betAmount + betAmount);
-
-            }
-
-
-//            player.sendMessage(plugin.getString("earnings")
-//                    .replace("$result$", plugin.getString("won"))
-//                    .replace("$number$", earnings + ""));
-
-            plugin.setServerImpact(plugin.getServerImpact() - betAmount);
-            plugin.increaseGamesPlayed();
-            plugin.increaseServerLosses();
-            if (er.transactionSuccess()) {
-                if(taxxed) {
-                    double tax = plugin.getTaxPercent() / 100.0;
-                    double postTax = tax * betAmount;
-                  //  player.sendMessage(plugin.getString("taxxed").replace("$amount$", postTax+""));
-                } else {
-                    player.sendMessage(ChatColor.GREEN + "+" + betAmount);
-
-                }
-            }
-        } else if (end == Ending.LOSE) {
-
-//            player.sendMessage(plugin.getString("earnings")
-//                    .replace("$result$", plugin.getString("lost"))
-//                    .replace("$number$", getBetAmount() + ""));
-//            plugin.setServerImpact(plugin.getServerImpact() + betAmount);
-            plugin.increaseGamesPlayed();
-            plugin.increaseServerWins();
-
-        } else if(end == Ending.TIE) {
-            // tie
-            //player.sendMessage(plugin.getString("tied"));
-            EconomyResponse er = Blackjack.getEconomy().depositPlayer(player, betAmount);
-            plugin.increaseGamesPlayed();
-        } else {
-            // they surrender
-            double surrender = betAmount - (betAmount * (plugin.getSurrenderPercentage() / 100));
-//            player.sendMessage(plugin.getString("surrender-message")
-//            .replace("$amount$", surrender+"").replace("$bet$", betAmount+""));
-
-            Blackjack.getEconomy().depositPlayer(player, surrender);
-            plugin.setServerImpact(plugin.getServerImpact() + surrender);
-            plugin.increaseGamesPlayed();
-            plugin.increaseServerWins();
-
-
-        }
-
-        // ask if they want to play another game perhaps, maybe implement sessions as a thing
-
-
-    }
+//
+//    public void endGame(Ending end) {
+//        Blackjack plugin = Blackjack.getInstance();
+////        player.sendMessage(plugin.getString("end-game")
+////                .replace("$score$", getScoreUnder21(getPlayerCards()) + "")
+////                .replace("$score2$", getScoreUnder21(getHouseCards()) + ""));
+//        this.end = end;
+//        if (end == Ending.WIN) {
+//            EconomyResponse er;
+//            boolean taxxed = false;
+//            double earnings = 0;
+//            if(plugin.getTaxPercent() != 0.0 && plugin.getTaxPercent() <= 100.0) {
+//                double tax = plugin.getTaxPercent() / 100.0;
+//                double postTax = betAmount - (tax * betAmount);
+//                earnings = postTax;
+//                 er = Blackjack.getEconomy().depositPlayer(player, postTax + betAmount);
+//                 taxxed = true;
+//            } else {
+//                earnings = betAmount;
+//                 er = Blackjack.getEconomy().depositPlayer(player, betAmount + betAmount);
+//
+//            }
+//
+//
+////            player.sendMessage(plugin.getString("earnings")
+////                    .replace("$result$", plugin.getString("won"))
+////                    .replace("$number$", earnings + ""));
+//
+//            plugin.setServerImpact(plugin.getServerImpact() - betAmount);
+//            plugin.increaseGamesPlayed();
+//            plugin.increaseServerLosses();
+//            if (er.transactionSuccess()) {
+//                if(taxxed) {
+//                    double tax = plugin.getTaxPercent() / 100.0;
+//                    double postTax = tax * betAmount;
+//                  //  player.sendMessage(plugin.getString("taxxed").replace("$amount$", postTax+""));
+//                } else {
+//                    player.sendMessage(ChatColor.GREEN + "+" + betAmount);
+//
+//                }
+//            }
+//        } else if (end == Ending.LOSE) {
+//
+////            player.sendMessage(plugin.getString("earnings")
+////                    .replace("$result$", plugin.getString("lost"))
+////                    .replace("$number$", getBetAmount() + ""));
+////            plugin.setServerImpact(plugin.getServerImpact() + betAmount);
+//            plugin.increaseGamesPlayed();
+//            plugin.increaseServerWins();
+//
+//        } else if(end == Ending.TIE) {
+//            // tie
+//            //player.sendMessage(plugin.getString("tied"));
+//            EconomyResponse er = Blackjack.getEconomy().depositPlayer(player, betAmount);
+//            plugin.increaseGamesPlayed();
+//        } else {
+//            // they surrender
+//            double surrender = betAmount - (betAmount * (plugin.getSurrenderPercentage() / 100));
+////            player.sendMessage(plugin.getString("surrender-message")
+////            .replace("$amount$", surrender+"").replace("$bet$", betAmount+""));
+//
+//            Blackjack.getEconomy().depositPlayer(player, surrender);
+//            plugin.setServerImpact(plugin.getServerImpact() + surrender);
+//            plugin.increaseGamesPlayed();
+//            plugin.increaseServerWins();
+//
+//
+//        }
+//
+//        // ask if they want to play another game perhaps, maybe implement sessions as a thing
+//
+//
+//    }
 
     public boolean equals(BlackjackGame game){
         return game.getUuid().equals(getUuid());

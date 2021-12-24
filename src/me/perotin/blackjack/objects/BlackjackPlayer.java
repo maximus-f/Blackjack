@@ -1,5 +1,7 @@
 package me.perotin.blackjack.objects;
 
+import me.perotin.blackjack.Blackjack;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;
@@ -54,5 +56,14 @@ public class BlackjackPlayer  {
             return new BlackjackPlayer(player.getUniqueId(), 0, 0);
         }
 
+    }
+
+    public double getBalance(){
+        if(Blackjack.getInstance().isUsingCash()){
+            return Blackjack.getEconomy().getBalance(Bukkit.getOfflinePlayer(uuid));
+        } else {
+
+            return Bukkit.getPlayer(uuid).getExpToLevel();
+        }
     }
 }

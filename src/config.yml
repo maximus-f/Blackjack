@@ -84,3 +84,23 @@ session-ending: "&eAfter $amount$ games, you resulted in $$outcome$!"
 change-bet-amount: "&eChange bet amount"
 your-bet-amount: "&eYour bet amount"
 continue-playing: "Continue playing, $player$?"
+
+# New messages
+blackjack: "&bBLACKJACK"
+previous-game: "&7Opening previous game. . ."
+wins-stat: "&cWins: &f$amount$"
+loss-stat: "&cLosses: &f$amount$"
+ratio-stat: "&cW/L Ratio: &f$amount$"
+amount-added: "&a+$amount$"
+amount-subtracted: "&c-$amount$"
+
+
+# Names of cards
+spades: "Spades"
+hearts: "Hearts"
+clubs: "Clubs"
+diamonds: "Diamonds"
+jack: "Jack"
+queen: "Queen"
+king:  "King"
+ace: "Ace"

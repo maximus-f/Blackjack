@@ -4,7 +4,6 @@ import me.perotin.blackjack.Blackjack;
 import me.perotin.blackjack.objects.BlackjackGame;
 import me.perotin.blackjack.objects.BlackjackPlayer;
 import me.perotin.blackjack.objects.GameSession;
-import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -14,6 +13,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
+import java.text.DecimalFormat;
 import java.util.stream.IntStream;
 
 /* Created by Perotin on 12/27/18 */
@@ -31,6 +31,8 @@ public class BlackjackCommand implements CommandExecutor {
     public boolean onCommand(CommandSender commandSender, Command command, String s, String[] args) {
         if(commandSender instanceof Player){
             Player player = (Player) commandSender;
+            BlackjackPlayer bj = Blackjack.getInstance().getPlayerFor(player);
+
             if(player.hasPermission("blackjack.play")) {
                 double betMax = plugin.getBetMax();
                 double betMin = plugin.getBetMin();
@@ -41,21 +43,23 @@ public class BlackjackCommand implements CommandExecutor {
                         betAmount = Double.parseDouble(args[0]);
                     } catch (NumberFormatException ex) {
                         if(Bukkit.getPlayer(args[0]) != null){
+                            BlackjackPlayer blackjackPlayer = plugin.getPlayerFor(Bukkit.getPlayer(args[0]));
+
                             // send player stats
                             // eventually do all player lookups, not just online
-                            BlackjackPlayer blackjackPlayer = plugin.getPlayerFor(Bukkit.getPlayer(args[0]));
                             if(blackjackPlayer != null){
                                 player.sendMessage(ChatColor.BLACK + "------------- " + ChatColor.RED + args[0] + ChatColor.BLACK + " -------------");
-                                player.sendMessage(ChatColor.RED + "Wins: " +ChatColor.WHITE + blackjackPlayer.getWins());
-                                player.sendMessage(ChatColor.RED + "Losses: " +ChatColor.WHITE + blackjackPlayer.getLosses());
+                                player.sendMessage(plugin.getString("wins-stat").replace("$amount$", ""+blackjackPlayer.getWins()));
+                                player.sendMessage(plugin.getString("loss-stat").replace("$amount$", ""+blackjackPlayer.getLosses()));
                                 double ratio;
                                 if(blackjackPlayer.getLosses() == 0) {
                                      ratio = blackjackPlayer.getWins();
                                 } else {
-                                    ratio = blackjackPlayer.getWins() / blackjackPlayer.getLosses();
+                                    ratio = (double) blackjackPlayer.getWins() / blackjackPlayer.getLosses();
                                 }
 
-                                player.sendMessage(ChatColor.RED + "W/L Ratio: " +ChatColor.WHITE + ratio);
+                                player.sendMessage(plugin.getString("ratio-stat").replace("$amount$",  new DecimalFormat("#.##").format(ratio)));
+
                                 return true;
                             } else {
                                 // should never be the case
@@ -91,7 +95,7 @@ public class BlackjackCommand implements CommandExecutor {
                             if (game.getPlayer().getUniqueId().equals(player.getUniqueId()) && game.getResult() == Double.MAX_VALUE) {
                                 // they have an ongoing game
                                 noOtherGames = false;
-                                player.sendMessage(ChatColor.GRAY + "Opening previous game. . .");
+                                player.sendMessage(plugin.getString("previous-game"));
                                 new BukkitRunnable() {
                                     @Override
                                     public void run() {
@@ -105,7 +109,7 @@ public class BlackjackCommand implements CommandExecutor {
                     }
                     if(plugin.isOverflow()) {
                         int overflowAmount = plugin.getConfig().getInt("bet-overflow-max");
-                        if(betAmount > Blackjack.getEconomy().getBalance(player) + overflowAmount){
+                        if(betAmount > bj.getBalance() + overflowAmount){
                             // too much
                             player.sendMessage(plugin.getString("can-only-bet")
                             .replace("$amount$", overflowAmount+""));
@@ -113,7 +117,7 @@ public class BlackjackCommand implements CommandExecutor {
                         }
 
                     } else {
-                        if(betAmount > Blackjack.getEconomy().getBalance(player)){
+                        if(betAmount > bj.getBalance()){
                             // can't
                             player.sendMessage(plugin.getString("cannot-bet-that-much"));
                             return true;
@@ -129,7 +133,8 @@ public class BlackjackCommand implements CommandExecutor {
 
                         BlackjackGame game = new BlackjackGame(player, betAmount);
                         GameSession session = new GameSession(player.getUniqueId(), game);
-                        EconomyResponse er = Blackjack.getEconomy().withdrawPlayer(player, betAmount);
+                       // EconomyResponse er = Blackjack.getEconomy().withdrawPlayer(player, betAmount);
+                        Blackjack.withdraw(betAmount, player);
                         plugin.getSessions().add(session);
                         player.openInventory(game.getInventory(true));
                         if(plugin.getConfig().getBoolean("custom-command")){
@@ -144,7 +149,7 @@ public class BlackjackCommand implements CommandExecutor {
                             if (game.getPlayer().getUniqueId().equals(player.getUniqueId()) && game.getResult() == Double.MAX_VALUE) {
                                 // they have an ongoing game
                                 noOtherGames = false;
-                                player.sendMessage(ChatColor.GRAY + "Opening previous game. . .");
+                                player.sendMessage(plugin.getString("previous-game", ChatColor.GRAY + "Opening previous game. . ."));
                                 new BukkitRunnable() {
                                     @Override
                                     public void run() {

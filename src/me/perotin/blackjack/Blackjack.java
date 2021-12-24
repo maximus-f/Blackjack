@@ -4,6 +4,7 @@ import me.perotin.blackjack.commands.BlackjackAdminCommand;
 import me.perotin.blackjack.commands.BlackjackCommand;
 import me.perotin.blackjack.events.BlackjackInventoryClickEvent;
 import me.perotin.blackjack.events.BlackjackJoinEvent;
+import me.perotin.blackjack.events.BlackjackLeaveMidGameEvent;
 import me.perotin.blackjack.events.BlackjackSessionClickEvent;
 import me.perotin.blackjack.objects.BlackFile;
 import me.perotin.blackjack.objects.BlackjackGame;
@@ -18,8 +19,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 import static me.perotin.blackjack.objects.BlackFile.BlackFilesType.STATS;
 
@@ -46,7 +48,9 @@ multiplier: 1.5
     private HashSet<GameSession> sessions;
     private static Economy econ = null;
     private boolean overFlow;
+    /** @apiNote true if cash, false if exp **/
     private boolean cash;
+    //private boolean forceForfeit;
     private Set<BlackjackPlayer> players;
     private double taxPercent, betMin, betMax = 0;
     // stats for admins
@@ -70,13 +74,18 @@ multiplier: 1.5
         this.sessions = new HashSet<>();
         this.games = 0;
         this.serverLosses = 0;
+        this.cash = getConfig().getBoolean("cash-or-xp");
+        //this.forceForfeit = getConfig().getBoolean("force-forfeit");
+
         this.surrender = getConfig().getBoolean("enable-surrender");
         this.surrenderPercentage = getConfig().getDouble("surrender-percentage-to-take");
         if(getConfig().getBoolean("enable-multiplier")){
             this.blackJackMultiplier = getConfig().getDouble("multiplier");
         } else this.blackJackMultiplier = 0;
         new UpdateChecker(this).checkForUpdate();
-        setupEconomy();
+        if(isUsingCash()) {
+            setupEconomy();
+        }
         //currentGames = new HashSet<>();
         players = new HashSet<>();
         instance = this;
@@ -92,6 +101,9 @@ multiplier: 1.5
         Bukkit.getPluginManager().registerEvents(new BlackjackInventoryClickEvent(this), this);
         Bukkit.getPluginManager().registerEvents(new BlackjackJoinEvent(this), this);
         Bukkit.getPluginManager().registerEvents(new BlackjackSessionClickEvent(this), this);
+//        if(false){
+//            Bukkit.getPluginManager().registerEvents(new BlackjackLeaveMidGameEvent(this), this);
+//        }
 
         this.overFlow = getConfig().getBoolean("bet-overflow");
         BlackFile.loadFiles();
@@ -102,9 +114,41 @@ multiplier: 1.5
 
     }
 
+    public static void withdraw(double amount, Player player){
+        if(Blackjack.getInstance().isUsingCash()){
+           Blackjack.getEconomy().withdrawPlayer(player, amount);
+
+        } else {
+            // using exp
+
+            player.setLevel(player.getLevel() - (int) amount);
+        }
+    }
+
+    public static void deposit(double amount, Player player){
+        if(Blackjack.getInstance().isUsingCash()){
+         Blackjack.getEconomy().depositPlayer(player, amount);
+
+        } else {
+            // using exp
+            player.setLevel(player.getLevel() + (int) amount);
+        }
+    }
+
+//
+//    public boolean isForceForfeit() {
+//        return forceForfeit;
+//    }
 
     public double getBlackJackMultiplier() {
         return blackJackMultiplier;
+    }
+
+    /**
+     * @return true if using cash, false is using exp
+     */
+    public  boolean isUsingCash(){
+        return cash;
     }
 
     public HashSet<GameSession> getSessions() {
@@ -199,7 +243,7 @@ multiplier: 1.5
                 if(player.getUuid().equals(p.getUniqueId())) return player;
             }
         }
-        return null;
+        return BlackjackPlayer.loadPlayer(p);
 
     }
 
