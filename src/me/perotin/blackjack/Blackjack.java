@@ -4,7 +4,6 @@ import me.perotin.blackjack.commands.BlackjackAdminCommand;
 import me.perotin.blackjack.commands.BlackjackCommand;
 import me.perotin.blackjack.events.BlackjackInventoryClickEvent;
 import me.perotin.blackjack.events.BlackjackJoinEvent;
-import me.perotin.blackjack.events.BlackjackLeaveMidGameEvent;
 import me.perotin.blackjack.events.BlackjackSessionClickEvent;
 import me.perotin.blackjack.objects.BlackFile;
 import me.perotin.blackjack.objects.BlackjackGame;
@@ -69,13 +68,15 @@ multiplier: 1.5
             "Ad",  "2d", "3d", "4d", "5d", "6d", "7d", "8d", "9d", "10d", "Jd", "Qd", "Kd"};
     @Override
     public void onEnable(){
-        Metrics metrics = new Metrics(this);
+        Metrics metrics = new Metrics(this, 4614);
         this.serverWins = 0;
         this.sessions = new HashSet<>();
         this.games = 0;
         this.serverLosses = 0;
         this.cash = getConfig().getBoolean("cash-or-xp");
         //this.forceForfeit = getConfig().getBoolean("force-forfeit");
+
+
 
         this.surrender = getConfig().getBoolean("enable-surrender");
         this.surrenderPercentage = getConfig().getDouble("surrender-percentage-to-take");

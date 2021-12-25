@@ -7,7 +7,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -86,11 +85,9 @@ public class GameSession {
        Blackjack.getInstance().getSessions().remove(this);
 
        Bukkit.getScheduler().runTaskLater(Blackjack.getInstance(), () -> {
-           Bukkit.broadcastMessage(getPlayer().getInventory().getContents().length + "!");
 
 
 
-           Bukkit.broadcastMessage(stopPlaying.build().toString());
 
            if (getPlayer().getInventory().contains(stopPlaying.build())) {
                // people can shift click item into their inventory so remove it

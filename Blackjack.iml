@@ -5,9 +5,9 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="17" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Vault" level="project" />
-    <orderEntry type="library" name="spigot" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Vault" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="spigot-api-1.18.1-R0.1-SNAPSHOT" level="project" />
   </component>
 </module>

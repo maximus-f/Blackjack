@@ -32,6 +32,7 @@ public class UpdateChecker {
 
     public UpdateChecker(final JavaPlugin javaPlugin) {
         this.javaPlugin = javaPlugin;
+
         this.localPluginVersion = javaPlugin.getDescription().getVersion();
     }
 
