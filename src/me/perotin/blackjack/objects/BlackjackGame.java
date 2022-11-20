@@ -42,6 +42,10 @@ public class BlackjackGame {
 //        this.houseScore = houseScore;
     }
 
+    /**
+     * Gets the next availible card
+     */
+
     public void getNextCard() {
         int random = new Random().nextInt(cardsAvailible.size());
         String card = cardsAvailible.get(random);
@@ -78,6 +82,11 @@ public class BlackjackGame {
         return houseCards;
     }
 
+    /**
+     *
+     * @param cards
+     * @return most optimal score under 21 for the cards
+     */
     public int getScoreUnder21(List<String> cards) {
         List<String> cardsToRemoveAndAdd = new ArrayList<>();
 
@@ -96,7 +105,7 @@ public class BlackjackGame {
             } else {
                 if (score + 11 <= 21) {
                     score += 11;
-                } else if (score + 11 > 21) {
+                } else  {
                     score += 1;
                 }
             }

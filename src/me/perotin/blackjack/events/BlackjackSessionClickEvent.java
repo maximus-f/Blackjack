@@ -6,6 +6,7 @@ import me.perotin.blackjack.util.XMaterial;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
@@ -20,7 +21,7 @@ public class BlackjackSessionClickEvent implements Listener {
         this.plugin = blackjack;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH)
     public void onClick(InventoryClickEvent event) {
         Inventory menu = event.getClickedInventory();
         if (event.getWhoClicked() instanceof Player) {

@@ -223,6 +223,11 @@ multiplier: 1.5
             file.set(player.getUuid().toString()+".losses", player.getLosses());
         });
 
+        // loop through ongoing sessions and end them
+        sessions.stream().forEach(session -> {
+
+        });
+
         file.set("server-impact", serverImpact);
         file.set("server-games", getTotalServerGames());
         file.set("server-wins", getTotalServerWins());
