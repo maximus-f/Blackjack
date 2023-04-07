@@ -222,7 +222,9 @@ public class GameSession {
 
 
 
-        Inventory menu = Bukkit.createInventory(null, 36, "Continue playing, " +game.getPlayer().getName()+"?");
+        String name = plugin.getString("continue-playing")
+                .replace("$player$", game.getPlayer().getName());
+        Inventory menu = Bukkit.createInventory(null, 36, name);
         IntStream.range(0, 10).forEach(i -> menu.setItem(i, new ItemBuilder(XMaterial.BLACK_STAINED_GLASS_PANE.parseItem().getType()).name("").build()));
         IntStream.range(27, 36).forEach(i -> menu.setItem(i, new ItemBuilder(XMaterial.BLACK_STAINED_GLASS_PANE.parseItem().getType()).name("").build()));
         menu.setItem(18, new ItemBuilder(XMaterial.BLACK_STAINED_GLASS_PANE.parseMaterial()).name(" ").build());
