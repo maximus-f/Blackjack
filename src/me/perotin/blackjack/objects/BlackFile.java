@@ -7,6 +7,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.*;
+import java.util.Objects;
 
 import static me.perotin.blackjack.objects.BlackFile.BlackFilesType.STATS;
 
@@ -61,12 +62,9 @@ public class BlackFile {
         File lang = null;
         InputStream defLangStream = null;
 
-        switch (type) {
-            case STATS:
-                lang = new File(Blackjack.getInstance().getDataFolder(), "stats.yml");
-                defLangStream = Blackjack.getInstance().getResource("stats.yml");
-                break;
-
+        if (Objects.requireNonNull(type) == STATS) {
+            lang = new File(Blackjack.getInstance().getDataFolder(), "stats.yml");
+            defLangStream = Blackjack.getInstance().getResource("stats.yml");
         }
         OutputStream out = null;
         if (!lang.exists()) {
