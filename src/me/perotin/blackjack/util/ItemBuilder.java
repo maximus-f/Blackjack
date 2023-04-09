@@ -71,6 +71,7 @@ public class ItemBuilder implements Listener {
      */
     public ItemBuilder name(final String name) {
         final ItemMeta meta = is.getItemMeta();
+        assert meta != null;
         meta.setDisplayName(name);
         is.setItemMeta(meta);
         return this;
