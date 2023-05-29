@@ -201,7 +201,7 @@ public class GameSession {
             getGames().add(game);
              Blackjack.withdraw(betAmount, getPlayer());
 
-            getPlayer().openInventory(game.getInventory(true));
+            getPlayer().openInventory(game.getInventory(true, false));
         } else {
             getPlayer().closeInventory();
             endSession();

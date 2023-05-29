@@ -4,7 +4,6 @@ import me.perotin.blackjack.Blackjack;
 import me.perotin.blackjack.objects.BlackjackGame;
 import me.perotin.blackjack.objects.BlackjackPlayer;
 import me.perotin.blackjack.objects.GameSession;
-import net.milkbowl.vault.economy.EconomyResponse;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -99,7 +98,7 @@ public class BlackjackCommand implements CommandExecutor {
                                 new BukkitRunnable() {
                                     @Override
                                     public void run() {
-                                        player.openInventory(game.getInventory(true));
+                                        player.openInventory(game.getInventory(true, false));
                                         IntStream.range(0, 25).forEach(i -> player.sendMessage(""));
 
                                     }
@@ -136,7 +135,7 @@ public class BlackjackCommand implements CommandExecutor {
                        // EconomyResponse er = Blackjack.getEconomy().withdrawPlayer(player, betAmount);
                         Blackjack.withdraw(betAmount, player);
                         plugin.getSessions().add(session);
-                        player.openInventory(game.getInventory(true));
+                        player.openInventory(game.getInventory(true, false));
                         if(plugin.getConfig().getBoolean("custom-command")){
                             Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), plugin.getConfig().getString("command").replace("$amount$", betAmount+""));
                         }
@@ -153,7 +152,7 @@ public class BlackjackCommand implements CommandExecutor {
                                 new BukkitRunnable() {
                                     @Override
                                     public void run() {
-                                        player.openInventory(game.getInventory(true));
+                                        player.openInventory(game.getInventory(true, false));
                                         IntStream.range(0, 25).forEach(i -> player.sendMessage(""));
 
                                     }

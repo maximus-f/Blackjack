@@ -29,16 +29,9 @@ public class Blackjack extends JavaPlugin {
 
     /*
     TODO
-    New messages for config:
+    new to config.yml
 
-    change-bet-amount: "&eChange bet amount"
-your-bet-amount: "&eYour bet amount"
-
-# Should there be a multiplier for Blackjack (score of 21)?
-enable-multiplier: true
-
-# What should the bet amount be multiplied to for blackjacks?
-multiplier: 1.5
+   enable-double-down: true
 
      */
 
@@ -57,9 +50,10 @@ multiplier: 1.5
     private double serverWins;
     private double games;
     private double serverLosses;
-    private boolean surrender;
+    private boolean surrender, doubleDown, doubleDownOverFlow;
     private double surrenderPercentage;
     private double blackJackMultiplier;
+
 
     public static String[] cards = {
             "As",  "2s", "3s", "4s", "5s", "6s", "7s", "8s", "9s", "10s", "Js", "Qs", "Ks",
@@ -79,6 +73,10 @@ multiplier: 1.5
 
 
         this.surrender = getConfig().getBoolean("enable-surrender");
+        this.doubleDown = getConfig().getBoolean("enable-double-down");
+        this.doubleDownOverFlow = getConfig().getBoolean("double-down-overflow");
+
+
         this.surrenderPercentage = getConfig().getDouble("surrender-percentage-to-take");
         if(getConfig().getBoolean("enable-multiplier")){
             this.blackJackMultiplier = getConfig().getDouble("multiplier");
@@ -159,6 +157,11 @@ multiplier: 1.5
     public boolean isSurrenderEnabled() {
         return surrender;
     }
+
+    public boolean isDoubleDownEnabled() {
+        return doubleDown;
+    }
+
 
     public double getSurrenderPercentage() {
         return surrenderPercentage;
@@ -285,7 +288,9 @@ multiplier: 1.5
     public static Blackjack getInstance() {return instance;}
 
 
-
+    public boolean isDoubleDownOverFlow() {
+        return doubleDownOverFlow;
+    }
 
     public  String getString(String path, String alternative){
         return  getConfig().getString(path) != null ? ChatColor.translateAlternateColorCodes('&', getConfig().getString(path)) : alternative;

@@ -8,7 +8,6 @@ import me.perotin.blackjack.util.ItemBuilder;
 import me.perotin.blackjack.util.XMaterial;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -19,7 +18,10 @@ import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
 
 /* Created by Perotin on 12/27/18 */
 public class BlackjackInventoryClickEvent implements Listener {
@@ -134,6 +136,23 @@ public class BlackjackInventoryClickEvent implements Listener {
                         session.endGame(currentGame,BlackjackGame.Ending.SURRENDER);
 
                     }
+                    if (item.getType() == XMaterial.NETHER_STAR.parseMaterial() && item.getItemMeta().getDisplayName().equals(plugin.getString("double-down-item"))) {
+                        // they double down
+                        // Double the bet amount and show them the new inventory where
+                        // only option is to stand after they gained a new card
+                        // ensure that they only see the nether star if it is the first move
+                        currentGame.setBetAmount(currentGame.getBetAmount()*2);
+                        currentGame.getNextCard();
+                        int score = currentGame.getScoreUnder21(currentGame.getPlayerCards());
+                        if (score > 21) {
+                            // they lose
+                            session.endGame(currentGame, BlackjackGame.Ending.LOSE);
+                            player.addLoss();
+                            return;
+                        }
+                        clicker.openInventory(currentGame.getInventory(true, true));
+
+                    }
 
                         if (item.getType() == XMaterial.MAP.parseMaterial() && item.getItemMeta().getDisplayName().equals(plugin.getString("hit-item"))) {
                         // they hit
@@ -145,7 +164,7 @@ public class BlackjackInventoryClickEvent implements Listener {
                             player.addLoss();
                             return;
                         }
-                        clicker.openInventory(currentGame.getInventory(true));
+                        clicker.openInventory(currentGame.getInventory(true, false));
 
 
                     } else if (item.getType() == XMaterial.BARRIER.parseMaterial() && item.getItemMeta().getDisplayName().equals(plugin.getString("stand-item"))) {
