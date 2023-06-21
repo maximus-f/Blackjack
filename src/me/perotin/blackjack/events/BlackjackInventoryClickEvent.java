@@ -64,7 +64,7 @@ public class BlackjackInventoryClickEvent implements Listener {
 
     @EventHandler
     public void onChat(AsyncPlayerChatEvent event) {
-        if (inTutorial.keySet().contains(event.getPlayer().getUniqueId())) {
+        if (inTutorial.containsKey(event.getPlayer().getUniqueId())) {
             event.setCancelled(true);
             if (event.getMessage().equalsIgnoreCase("cancel")) {
                 inTutorial.remove(event.getPlayer());

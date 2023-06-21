@@ -31,8 +31,18 @@ public class Blackjack extends JavaPlugin {
     TODO
     new to config.yml
 
-   enable-double-down: true
+# Should doubling down be enabled (double your bet amount but forced to stand after drawing 1 more card)
+enable-double-down: true
 
+# If double down is enabled, and a person doubles down without enough funds to cover the cost of a loss,
+# should they still be rewarded the 2x multiplier?
+# E.g. player A bets all $100 they own, they then double down making the bet $200, they then lose and hence lose
+# $200. However, a lot of economies do not use negative balances so they would really only lose $100.
+# I'd recommend keeping this false unless your economy allows for players to have negative balances
+double-down-overflow: false
+
+double-down-item: "&eDouble Down"
+double-down-lore: "&7&o(Double the bet amount and stand after 1 more card)"
      */
 
     private static Blackjack instance;
@@ -221,15 +231,15 @@ public class Blackjack extends JavaPlugin {
     @Override
     public void onDisable(){
         BlackFile file = new BlackFile(STATS);
+        sessions.forEach(GameSession::endSession);
+
         players.stream().forEach(player ->{
             file.set(player.getUuid().toString()+".wins", player.getWins());
             file.set(player.getUuid().toString()+".losses", player.getLosses());
         });
+        players.clear();
+        sessions.clear();
 
-        // loop through ongoing sessions and end them
-        sessions.stream().forEach(session -> {
-
-        });
 
         file.set("server-impact", serverImpact);
         file.set("server-games", getTotalServerGames());

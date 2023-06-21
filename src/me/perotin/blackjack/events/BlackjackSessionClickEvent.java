@@ -29,7 +29,6 @@ public class BlackjackSessionClickEvent implements Listener {
             if (plugin.getSessionFor(clicker.getUniqueId()) != null) {
                 GameSession session = plugin.getSessionFor(clicker.getUniqueId());
                 if (event.getView().getTitle().equals(plugin.getString("continue-playing").replace("$player$", clicker.getName()))) {
-                    System.out.println("Here!");
                     event.setCancelled(true);
                     double betMax = plugin.getBetMax();
                     double betMin = plugin.getBetMin();
