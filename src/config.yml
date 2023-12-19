@@ -50,6 +50,16 @@ enable-multiplier: true
 # What should the bet amount be multiplied to for blackjacks?
 multiplier: 1.5
 
+
+# Sunflowers that are used to increase/decrease the bet value in menu
+bet-modifiers:
+   increaseValue1: 10
+   increaseValue2: 100
+   increaseValue3: 1000
+   decreaseValue1: 10
+   decreaseValue2: 100
+   decreaseValue3: 1000
+
 # Messages used in plugin
 number-or-player: "&cIncorrect args! /blackjack <amount> or /blackjack <player>"
 no-permission: "&cYou do not have permissions to do this!"

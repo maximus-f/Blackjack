@@ -308,13 +308,20 @@ public class GameSession {
         menu.setItem(4, totalEarnings.build());
 
         if(Blackjack.getInstance().getConfig().getBoolean("enable-change-bet")) {
-            menu.setItem(19, new ItemBuilder(XMaterial.SUNFLOWER.parseItem().getType()).name(ChatColor.RED + "-1000").build());
-            menu.setItem(20, new ItemBuilder(XMaterial.SUNFLOWER.parseItem().getType()).name(ChatColor.RED + "-100").build());
-            menu.setItem(21, new ItemBuilder(XMaterial.SUNFLOWER.parseItem().getType()).name(ChatColor.RED + "-10").build());
+            int betIncrease1 = Blackjack.getInstance().getConfig().getInt("bet-modifiers.increaseValue1");
+            int betIncrease2 = Blackjack.getInstance().getConfig().getInt("bet-modifiers.increaseValue2");
+            int betIncrease3 = Blackjack.getInstance().getConfig().getInt("bet-modifiers.increaseValue3");
+            int betDecrease1 = Blackjack.getInstance().getConfig().getInt("bet-modifiers.decreaseValue1");
+            int betDecrease2 = Blackjack.getInstance().getConfig().getInt("bet-modifiers.decreaseValue2");
+            int betDecrease3 = Blackjack.getInstance().getConfig().getInt("bet-modifiers.decreaseValue3");
 
-            menu.setItem(23, new ItemBuilder(XMaterial.SUNFLOWER.parseItem().getType()).name(ChatColor.GREEN + "+10").build());
-            menu.setItem(24, new ItemBuilder(XMaterial.SUNFLOWER.parseItem().getType()).name(ChatColor.GREEN + "+100").build());
-            menu.setItem(25, new ItemBuilder(XMaterial.SUNFLOWER.parseItem().getType()).name(ChatColor.GREEN + "+1000").build());
+            menu.setItem(19, new ItemBuilder(XMaterial.SUNFLOWER.parseItem().getType()).name(ChatColor.RED + "-" + betDecrease3).build());
+            menu.setItem(20, new ItemBuilder(XMaterial.SUNFLOWER.parseItem().getType()).name(ChatColor.RED + "-" + betDecrease2).build());
+            menu.setItem(21, new ItemBuilder(XMaterial.SUNFLOWER.parseItem().getType()).name(ChatColor.RED + "-" + betDecrease1).build());
+
+            menu.setItem(23, new ItemBuilder(XMaterial.SUNFLOWER.parseItem().getType()).name(ChatColor.GREEN + "+" + betIncrease1).build());
+            menu.setItem(24, new ItemBuilder(XMaterial.SUNFLOWER.parseItem().getType()).name(ChatColor.GREEN + "+" + betIncrease2).build());
+            menu.setItem(25, new ItemBuilder(XMaterial.SUNFLOWER.parseItem().getType()).name(ChatColor.GREEN + "+" + betIncrease3).build());
             menu.setItem(22, new ItemBuilder(XMaterial.BOOK.parseMaterial()).name(plugin.getString("change-bet-amount", ChatColor.YELLOW + "Change bet amount!")).lore(ChatColor.GRAY + "$" + betAmount).build());
         } else {
             menu.setItem(22, new ItemBuilder(XMaterial.BOOK.parseMaterial()).name(plugin.getString("your-bet-amount", ChatColor.YELLOW + "Your bet amount!")).lore(ChatColor.GRAY + "$" + betAmount).build());
