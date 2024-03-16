@@ -53,12 +53,12 @@ multiplier: 1.5
 
 # Sunflowers that are used to increase/decrease the bet value in menu
 bet-modifiers:
-   increaseValue1: 10
-   increaseValue2: 100
-   increaseValue3: 1000
-   decreaseValue1: 10
-   decreaseValue2: 100
-   decreaseValue3: 1000
+   increaseValue1: 10.0
+   increaseValue2: 100.0
+   increaseValue3: 1000.0
+   decreaseValue1: 10.0
+   decreaseValue2: 100.0
+   decreaseValue3: 1000.0
 
 # Messages used in plugin
 number-or-player: "&cIncorrect args! /blackjack <amount> or /blackjack <player>"

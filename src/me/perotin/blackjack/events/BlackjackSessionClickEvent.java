@@ -35,6 +35,7 @@ public class BlackjackSessionClickEvent implements Listener {
                     ItemStack clicked = event.getCurrentItem();
                     if(clicked != null && clicked.hasItemMeta()) {
                         if (clicked.getType() == XMaterial.REDSTONE.parseItem().getType()) {
+                            event.setCancelled(true);
                             session.endSession();
 
                         } else if (clicked.getType() == XMaterial.EMERALD.parseItem().getType()) {

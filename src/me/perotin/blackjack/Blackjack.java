@@ -4,6 +4,7 @@ import me.perotin.blackjack.commands.BlackjackAdminCommand;
 import me.perotin.blackjack.commands.BlackjackCommand;
 import me.perotin.blackjack.events.BlackjackInventoryClickEvent;
 import me.perotin.blackjack.events.BlackjackJoinEvent;
+import me.perotin.blackjack.events.BlackjackLeaveMidGameEvent;
 import me.perotin.blackjack.events.BlackjackSessionClickEvent;
 import me.perotin.blackjack.objects.BlackFile;
 import me.perotin.blackjack.objects.BlackjackGame;
@@ -110,6 +111,8 @@ double-down-lore: "&7&o(Double the bet amount and stand after 1 more card)"
         Bukkit.getPluginManager().registerEvents(new BlackjackInventoryClickEvent(this), this);
         Bukkit.getPluginManager().registerEvents(new BlackjackJoinEvent(this), this);
         Bukkit.getPluginManager().registerEvents(new BlackjackSessionClickEvent(this), this);
+        Bukkit.getPluginManager().registerEvents(new BlackjackLeaveMidGameEvent(this), this);
+
 //        if(false){
 //            Bukkit.getPluginManager().registerEvents(new BlackjackLeaveMidGameEvent(this), this);
 //        }

@@ -69,6 +69,7 @@ public class GameSession {
 
     public void endSession(){
        getPlayer().closeInventory();
+
         ItemBuilder stopPlaying = new ItemBuilder(XMaterial.REDSTONE.parseItem());
         stopPlaying.name(Blackjack.getInstance().getString("stop-playing"));
 
@@ -84,7 +85,7 @@ public class GameSession {
        }
        Blackjack.getInstance().getSessions().remove(this);
 
-       Bukkit.getScheduler().runTaskLater(Blackjack.getInstance(), () -> {
+//       Bukkit.getScheduler().runTaskLater(Blackjack.getInstance(), () -> {
 
 
 
@@ -94,7 +95,7 @@ public class GameSession {
                getPlayer().getInventory().remove(stopPlaying.build());
 
            }
-       },20*2);
+//       },10);
     }
 
 
@@ -328,7 +329,9 @@ public class GameSession {
 
         }
 
-        game.getPlayer().openInventory(menu);
+        if (menu != null && game.getPlayer() != null) {
+            game.getPlayer().openInventory(menu);
+        }
     }
 
 
