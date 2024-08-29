@@ -1,0 +1,15 @@
+name: Blackjack
+main: me.perotin.blackjack.Blackjack
+version: 1.7.4
+author: Perotin
+depends: [Vault]
+api-version: 1.13
+commands:
+   blackjack:
+      usage: /blackjack <amount>
+      permission: blackjack.play
+      aliases: [bj]
+   blackjackadmin:
+      usage: /blackjackadmin
+      permission: blackjack.admin
+      aliases: [bja]

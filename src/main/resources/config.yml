@@ -1,0 +1,130 @@
+#
+# BLACKJACK
+#      by Perotin
+
+
+# Set to true if you want this plugin to use vault eco, false if you want it to use exp
+cash-or-xp: true
+# This is a toggle of whether or not players should be allowed to bet more money than they currently have
+bet-overflow: false
+# If the above is set to true, this is the max amount they can bet of money theey don't have
+bet-overflow-max: 1000
+
+# The percentage that should be taxed / deducted from winnings. Set to 0.0 for no taxes. Range is 0.0 to 100.0 .
+tax-percent: 0.0
+
+# Minimum amount able to bet and the maximum amount to bet! Setting either to zero will negate it completely.
+bet-min: 0.0
+bet-max: 0.0
+
+# The following options relate to the move to surrender
+
+# Should surrendering (forfeit the game and keep a % of your bet)
+enable-surrender: true
+
+# What percentage of the bet should the server take? (1-99)
+surrender-percentage-to-take: 50.0
+
+# Should doubling down be enabled (double your bet amount but forced to stand after drawing 1 more card)
+enable-double-down: true
+
+# If double down is enabled, and a person doubles down without enough funds to cover the cost of a loss,
+# should they still be rewarded the 2x multiplier?
+# E.g. player A bets all $100 they own, they then double down making the bet $200, they then lose and hence lose
+# $200. However, a lot of economies do not use negative balances so they would really only lose $100.
+# I'd recommend keeping this false unless your economy allows for players to have negative balances
+double-down-overflow: false
+
+
+# Disable the change bet buttons? (Players cannot change their amount in the bet)
+enable-change-bet: true
+
+# One user requested this, basically, it'll run the specified command below when each round of blackjack starts. If you want
+# to use this, then set the below to 'true' and specify your command.
+custom-command: false
+command: "/Example $amount$"
+
+# Should there be a multiplier for Blackjack (score of 21)?
+enable-multiplier: true
+
+# What should the bet amount be multiplied to for blackjacks?
+multiplier: 1.5
+
+
+# Sunflowers that are used to increase/decrease the bet value in menu
+bet-modifiers:
+   increaseValue1: 10.0
+   increaseValue2: 100.0
+   increaseValue3: 1000.0
+   decreaseValue1: 10.0
+   decreaseValue2: 100.0
+   decreaseValue3: 1000.0
+
+# Messages used in plugin
+number-or-player: "&cIncorrect args! /blackjack <amount> or /blackjack <player>"
+no-permission: "&cYou do not have permissions to do this!"
+menu-title: "Blackjack: Betting $number$"
+blackjack-dealer: "&8&lDealer"
+blackjack-win: "&0&lBlack&4&lJack! &7&o($amount$x) "
+dealer-lore: "&7&oHit or Stand?"
+dealer-cards: "&eDealer cards ==>"
+player-cards: "&eYour cards ==>"
+unknown-card: "&e???"
+incorrect-args: "&cImproper arguments > /blackjack <amount> or /blackjack <player>"
+hit-item: "&eHit"
+stand-item: "&eStand"
+end-game: "&7Your Score: &e$score$ &7Dealer Score: &e$score2$"
+earnings: "&eYou $result$ $number$ coins!"
+taxxed: "&c-$amount$ taxed."
+won: "won"
+lost: "lost"
+tied: "&eYou tied so you get your coins back."
+cannot-bet-that-much: "&cYou cannot bet more money than you have!"
+can-only-bet: "&cYou can only bet $amount$ over your total balance!"
+tutorial-name: "&eDon't know how to play? Click me!"
+tutorial:
+   - "&eWelcome to this BlackJack tutorial! To cancel, type &ccancel"
+   - "&eThe goal of the game is to get as close to a score of 21 without going over, and beat the dealer by having a higher score. "
+   - "&eCards 2-10 are worth their face value (4 of Spades is worth 4)."
+   - "&eKings, Jacks, and Queens are worth 10. Ace is worth 1 or 11, depending on what is better for the player."
+   - "&e'Hitting' is when you want another card, but you take the risk of going over 21 and losing."
+   - "&e 'Standing' is when you are confident with your cards, and want to end the game."
+   - "&eThanks for playing!"
+bet-max-message: "&cThe maximum you can bet is $amount$!"
+bet-min-message: "&cThe minimum you can bet is $amount$!"
+surrender-item: "&eSurrender"
+surrender-lore: "&7&o(Retain half of your bet)"
+surrender-message: "&eYou surrendered, keeping $amount$ of your original $bet$ bet!"
+double-down-item: "&eDouble Down"
+double-down-lore: "&7&o(Double the bet amount and stand after 1 more card)"
+
+
+# Session Messages
+earnings-gui: "&ePrevious Game's earnings:"
+keep-playing: "&aKeep playing?"
+stop-playing: "&cExit Session?"
+total-earnings: "&eTotal earnings: $amount$"
+session-ending: "&eAfter $amount$ games, you resulted in $$outcome$!"
+change-bet-amount: "&eChange bet amount"
+your-bet-amount: "&eYour bet amount"
+continue-playing: "Continue playing, $player$?"
+
+# New messages
+blackjack: "&bBLACKJACK"
+previous-game: "&7Opening previous game. . ."
+wins-stat: "&cWins: &f$amount$"
+loss-stat: "&cLosses: &f$amount$"
+ratio-stat: "&cW/L Ratio: &f$amount$"
+amount-added: "&a+$amount$"
+amount-subtracted: "&c-$amount$"
+
+
+# Names of cards
+spades: "Spades"
+hearts: "Hearts"
+clubs: "Clubs"
+diamonds: "Diamonds"
+jack: "Jack"
+queen: "Queen"
+king:  "King"
+ace: "Ace"
