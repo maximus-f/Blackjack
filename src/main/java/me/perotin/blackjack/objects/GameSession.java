@@ -119,8 +119,10 @@ public class GameSession {
             if (plugin.getTaxPercent() != 0.0 && plugin.getTaxPercent() <= 100.0) {
                 double tax = plugin.getTaxPercent() / 100.0;
                 double postTax = betAmount - (tax * betAmount);
-                if(playerScore == 21 && plugin.getBlackJackMultiplier() > 1) {
+                if(playerScore == 21 && game.getPlayerCards().size() == 2 && Blackjack.getInstance().getConfig().getBoolean("first-two", true) && plugin.getBlackJackMultiplier() > 1) {
                     blackJack = true;
+                    game.setBlackjack(true);
+
                     Blackjack.deposit( (plugin.getBlackJackMultiplier()*postTax) + betAmount, player);
                 } else {
                     Blackjack.deposit( postTax + betAmount, player);
@@ -129,7 +131,9 @@ public class GameSession {
             } else {
                 if(playerScore == 21 && plugin.getBlackJackMultiplier() > 1) {
                     blackJack = true;
-                   Blackjack.deposit(multiplierAmount, player);
+                    game.setBlackjack(true);
+
+                    Blackjack.deposit(multiplierAmount, player);
                 } else {
                      Blackjack.deposit( betAmount + betAmount, player);
 
@@ -238,7 +242,8 @@ public class GameSession {
         menu.setItem(3, new ItemBuilder(XMaterial.BOOKSHELF.parseMaterial()).name(plugin.getString("dealer-cards") + game.getScoreUnder21(game.getHouseCards())).build());
         menu.setItem(5, new ItemBuilder(XMaterial.BOOKSHELF.parseMaterial()).name(plugin.getString("player-cards") + game.getScoreUnder21(game.getPlayerCards())).build());
 
-        if(game.getScoreUnder21(game.getPlayerCards()) == 21 && game.getResult() > 0){
+
+        if(game.getScoreUnder21(game.getPlayerCards()) == 21 && game.getResult() > 0 && game.isBlackjackEnding()){
             //blackjack
             BukkitRunnable runnable = new BukkitRunnable() {
                 int counter = 0;

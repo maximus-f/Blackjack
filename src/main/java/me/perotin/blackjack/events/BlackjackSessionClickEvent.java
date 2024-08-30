@@ -23,7 +23,7 @@ public class BlackjackSessionClickEvent implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onClick(InventoryClickEvent event) {
-        Inventory menu = event.getClickedInventory();
+        Inventory menu = event.getInventory();
         if (event.getWhoClicked() instanceof Player) {
             Player clicker = (Player) event.getWhoClicked();
             if (plugin.getSessionFor(clicker.getUniqueId()) != null) {

@@ -19,7 +19,7 @@ public class BlackjackGame {
     private ArrayList<String> playerCards;
     private ArrayList<String> houseCards;
     // true if player is next, false if house is next
-    private boolean playerTurn;
+    private boolean playerTurn, blackjack;
     private ArrayList<String> cardsAvailible;
     private Ending end = null;
     private final UUID uuid;
@@ -76,6 +76,14 @@ public class BlackjackGame {
 
     public ArrayList<String> getPlayerCards() {
         return playerCards;
+    }
+
+    public void setBlackjack(boolean blackjack) {
+        this.blackjack = blackjack;
+    }
+
+    public boolean isBlackjackEnding() {
+        return blackjack;
     }
 
     public ArrayList<String> getHouseCards() {

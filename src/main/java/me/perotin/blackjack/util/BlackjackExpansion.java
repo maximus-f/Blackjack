@@ -1,4 +1,4 @@
-package at.helpch.placeholderapi.example.expansion;
+package me.perotin.blackjack.util;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 

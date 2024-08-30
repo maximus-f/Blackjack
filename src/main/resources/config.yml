@@ -50,6 +50,10 @@ enable-multiplier: true
 # What should the bet amount be multiplied to for blackjacks?
 multiplier: 1.5
 
+# Should blackjack be only for the first two cards drawn
+# (This is how normal blackjack works, but if you want to be more lenient here you can)
+first-two: true
+
 
 # Sunflowers that are used to increase/decrease the bet value in menu
 bet-modifiers:
