@@ -4,6 +4,7 @@ target/
 !**/src/test/**/target/
 out/
 .idea/
+custom-output/
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
