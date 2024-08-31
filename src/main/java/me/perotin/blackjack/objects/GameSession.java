@@ -119,7 +119,7 @@ public class GameSession {
             if (plugin.getTaxPercent() != 0.0 && plugin.getTaxPercent() <= 100.0) {
                 double tax = plugin.getTaxPercent() / 100.0;
                 double postTax = betAmount - (tax * betAmount);
-                if(playerScore == 21 && game.getPlayerCards().size() == 2 && Blackjack.getInstance().getConfig().getBoolean("first-two", true) && plugin.getBlackJackMultiplier() > 1) {
+                if(playerScore == 21 && game.getPlayerCards().size() == 2  && plugin.getBlackJackMultiplier() > 1) {
                     blackJack = true;
                     game.setBlackjack(true);
 
@@ -129,7 +129,7 @@ public class GameSession {
                 }
                 taxxed = true;
             } else {
-                if(playerScore == 21 && plugin.getBlackJackMultiplier() > 1) {
+                if(playerScore == 21 && plugin.getBlackJackMultiplier() > 1 && game.getPlayerCards().size() == 2) {
                     blackJack = true;
                     game.setBlackjack(true);
 
