@@ -50,6 +50,19 @@ public class GameSession {
         
     }
 
+    public BlackjackGame hasOngoingGame(){
+        for (BlackjackGame game : games) {
+            if (game.getResult() == Double.MAX_VALUE) return game;
+        }
+        return null;
+    }
+    public double getBetOfOngoingGame(){
+        BlackjackGame game = hasOngoingGame();
+        if (game == null) return -1;
+        return game.getBetAmount();
+    }
+
+
     public UUID getUuid() {
         return uuid;
     }

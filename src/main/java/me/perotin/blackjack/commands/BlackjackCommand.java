@@ -21,9 +21,11 @@ public class BlackjackCommand implements CommandExecutor {
 
     private Blackjack plugin;
 
+    private boolean secondaryBetOverride = false;
 
     public BlackjackCommand(Blackjack plugin){
         this.plugin = plugin;
+        this.secondaryBetOverride = plugin.isSecondaryBetOverride();
     }
 
     @Override
@@ -88,8 +90,17 @@ public class BlackjackCommand implements CommandExecutor {
                     }
 
                     // search up if they already have an on-going game
+                    // However, create a new one if secondary enable override is true
+                    GameSession blackjackSession = plugin.getSessionFor(player.getUniqueId());
+                    // Check if session exists, config option is set to true, current game exists and bet amounts are
+                    // different.
+                    boolean secondaryOverrideCheckCurrentGame = blackjackSession != null && secondaryBetOverride &&
+                            blackjackSession.hasOngoingGame() != null && betAmount != blackjackSession.getBetOfOngoingGame();
+                        // Specific case for NPC shops where you want to create different bets.
+
+
                     boolean noOtherGames = true;
-                    if(plugin.getSessionFor(player.getUniqueId()) != null) {
+                    if(plugin.getSessionFor(player.getUniqueId()) != null && secondaryOverrideCheckCurrentGame) {
                         for (BlackjackGame game : plugin.getSessionFor(player.getUniqueId()).getGames()) {
                             if (game.getPlayer().getUniqueId().equals(player.getUniqueId()) && game.getResult() == Double.MAX_VALUE) {
                                 // they have an ongoing game
@@ -156,7 +167,7 @@ public class BlackjackCommand implements CommandExecutor {
                                         IntStream.range(0, 25).forEach(i -> player.sendMessage(""));
 
                                     }
-                                }.runTaskLater(plugin, 60);
+                                }.runTaskLater(plugin, 30);
                             }
                         }
                     }

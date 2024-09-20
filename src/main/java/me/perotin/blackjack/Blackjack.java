@@ -61,7 +61,7 @@ double-down-lore: "&7&o(Double the bet amount and stand after 1 more card)"
     private double serverWins;
     private double games;
     private double serverLosses;
-    private boolean surrender, doubleDown, doubleDownOverFlow;
+    private boolean surrender, doubleDown, doubleDownOverFlow, secondaryBetOverride;
     private double surrenderPercentage;
     private double blackJackMultiplier;
 
@@ -87,6 +87,7 @@ double-down-lore: "&7&o(Double the bet amount and stand after 1 more card)"
         this.doubleDown = getConfig().getBoolean("enable-double-down");
         this.doubleDownOverFlow = getConfig().getBoolean("double-down-overflow");
 
+        this.secondaryBetOverride = getConfig().getBoolean("enable-secondary-bet-override");
 
         this.surrenderPercentage = getConfig().getDouble("surrender-percentage-to-take");
         if(getConfig().getBoolean("enable-multiplier")){
@@ -187,6 +188,10 @@ double-down-lore: "&7&o(Double the bet amount and stand after 1 more card)"
 
     public double getTotalServerLosses() {
         return new BlackFile(STATS).getConfiguration().getInt("server-losses") + getServerLosses();
+    }
+
+    public boolean isSecondaryBetOverride() {
+        return secondaryBetOverride;
     }
 
     public void increaseServerLosses() {

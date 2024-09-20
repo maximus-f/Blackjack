@@ -75,6 +75,7 @@ public class BlackjackLeaveMidGameEvent implements Listener {
         GameSession session = null;
         if (plugin.getSessionFor(quitter.getUniqueId()) != null) {
 
+            Bukkit.getConsoleSender().sendMessage("Deleting instance");
 
             for (BlackjackGame game : plugin.getSessionFor(quitter.getUniqueId()).getGames()) {
                 if (game.getPlayer().getUniqueId().equals(quitter.getUniqueId())) {

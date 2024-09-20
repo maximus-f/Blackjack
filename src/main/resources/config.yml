@@ -3,11 +3,12 @@
 #      by Perotin
 
 
-# Set to true if you want this plugin to use vault eco, false if you want it to use exp
+# Set to true if you want this plugin to use vault eco, false if you want it to use exp (not recommended, may be buggy)
 cash-or-xp: true
+
 # This is a toggle of whether or not players should be allowed to bet more money than they currently have
 bet-overflow: false
-# If the above is set to true, this is the max amount they can bet of money theey don't have
+# If the above is set to true, this is the max amount they can bet of money they don't have
 bet-overflow-max: 1000
 
 # The percentage that should be taxed / deducted from winnings. Set to 0.0 for no taxes. Range is 0.0 to 100.0 .
@@ -16,6 +17,13 @@ tax-percent: 0.0
 # Minimum amount able to bet and the maximum amount to bet! Setting either to zero will negate it completely.
 bet-min: 0.0
 bet-max: 0.0
+
+# Override secondary /bet commands?
+# E.g. Some people have told me they have multiple NPC's with different bet amounts.
+# This poses a problem due to the session system where running /bet 100 and then /bet 200 will pull up the first
+# bet. Set the below to true if you wish for different bet amounts to trigger a new blackjack round.
+enable-secondary-bet-override: false
+
 
 # The following options relate to the move to surrender
 
@@ -46,7 +54,6 @@ command: "/Example $amount$"
 
 # Should there be a multiplier for Blackjack (score of 21)?
 enable-multiplier: true
-
 # What should the bet amount be multiplied to for blackjacks?
 multiplier: 1.5
 
