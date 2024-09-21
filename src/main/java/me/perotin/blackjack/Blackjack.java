@@ -87,7 +87,7 @@ double-down-lore: "&7&o(Double the bet amount and stand after 1 more card)"
         this.doubleDown = getConfig().getBoolean("enable-double-down");
         this.doubleDownOverFlow = getConfig().getBoolean("double-down-overflow");
 
-        this.secondaryBetOverride = getConfig().getBoolean("enable-secondary-bet-override");
+        this.secondaryBetOverride = getConfig().getBoolean("enable-secondary-bet-override", false);
 
         this.surrenderPercentage = getConfig().getDouble("surrender-percentage-to-take");
         if(getConfig().getBoolean("enable-multiplier")){

@@ -98,9 +98,10 @@ public class BlackjackCommand implements CommandExecutor {
                             blackjackSession.hasOngoingGame() != null && betAmount != blackjackSession.getBetOfOngoingGame();
                         // Specific case for NPC shops where you want to create different bets.
 
+                    // do this for other scenario where no game but session exists
 
                     boolean noOtherGames = true;
-                    if(plugin.getSessionFor(player.getUniqueId()) != null && secondaryOverrideCheckCurrentGame) {
+                    if(plugin.getSessionFor(player.getUniqueId()) != null && !secondaryOverrideCheckCurrentGame) {
                         for (BlackjackGame game : plugin.getSessionFor(player.getUniqueId()).getGames()) {
                             if (game.getPlayer().getUniqueId().equals(player.getUniqueId()) && game.getResult() == Double.MAX_VALUE) {
                                 // they have an ongoing game
@@ -134,16 +135,21 @@ public class BlackjackCommand implements CommandExecutor {
                         }
                     }
                     if(noOtherGames) {
-                        if(plugin.getSessionFor(player.getUniqueId()) != null){
+                        if(plugin.getSessionFor(player.getUniqueId()) != null && !secondaryOverrideCheckCurrentGame){
                             // they have a session already
                             GameSession session= plugin.getSessionFor(player.getUniqueId());
                             session.showEndMenu(session.getGames().get(session.getGames().size()-1));
                             return true;
                         }
 
+                        if (secondaryOverrideCheckCurrentGame) {
+                            // cancel the old game
+                            blackjackSession.hasOngoingGame().setEnd(BlackjackGame.Ending.LOSE);
+                            bj.addLoss();
+                            blackjackSession.endSession();
+                        }
                         BlackjackGame game = new BlackjackGame(player, betAmount);
                         GameSession session = new GameSession(player.getUniqueId(), game);
-                       // EconomyResponse er = Blackjack.getEconomy().withdrawPlayer(player, betAmount);
                         Blackjack.withdraw(betAmount, player);
                         plugin.getSessions().add(session);
                         player.openInventory(game.getInventory(true, false));
