@@ -18,6 +18,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.HashMap;
@@ -144,6 +145,16 @@ public class Blackjack extends JavaPlugin {
         return true;
     }
 
+    private void broadcastAnnouncement(String type, Player player, double amount) {
+        if (!getConfig().getBoolean("broadcast-announcements", true)) return;
+
+        String message = getString("broadcast-messages." + type);
+        if (message.trim().isEmpty()) return;
+
+        String formattedAmount = BigDecimal.valueOf(amount).stripTrailingZeros().toPlainString();
+        Bukkit.broadcastMessage(message.replace("$player$", player.getName()).replace("$amount$", formattedAmount));
+    }
+
     public void recordOutcome(Player player, BlackjackGame.Ending outcome, double net) {
         serverImpact -= net;
         games++;
@@ -151,11 +162,13 @@ public class Blackjack extends JavaPlugin {
             case WIN:
                 getPlayerFor(player).addWin();
                 serverLosses++;
+                broadcastAnnouncement("win", player, net);
                 break;
             case SURRENDER:
             case LOSE:
                 getPlayerFor(player).addLoss();
                 serverWins++;
+                broadcastAnnouncement("loss", player, Math.abs(net));
                 break;
             case TIE:
                 break;
