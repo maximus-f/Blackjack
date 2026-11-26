@@ -3,7 +3,6 @@ package me.perotin.blackjack.objects;
 import me.perotin.blackjack.Blackjack;
 import me.perotin.blackjack.util.ItemBuilder;
 import me.perotin.blackjack.util.XMaterial;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -19,9 +18,10 @@ public class BlackjackGame {
     private ArrayList<String> playerCards;
     private ArrayList<String> houseCards;
     // true if player is next, false if house is next
-    private boolean playerTurn, blackjack;
+    private boolean playerTurn;
     private ArrayList<String> cardsAvailible;
-    private Ending end = null;
+    private RoundResult result;
+    private boolean doubled;
     private final UUID uuid;
 
     public BlackjackGame(Player player, double betAmount) {
@@ -58,32 +58,44 @@ public class BlackjackGame {
 
     }
 
-    public Ending getEnd() {
-        return end;
+    public RoundResult getSettlement() {
+        return result;
     }
 
-    public void setEnd(Ending end) {
-        this.end = end;
+    public RoundResult finish(Ending outcome, double multiplier, double tax, double surrender, boolean cash) {
+        if (result != null) return null;
+        boolean natural = playerCards.size() == 2 && getScoreUnder21(playerCards) == 21;
+        result = new RoundResult(outcome, betAmount, natural, multiplier, tax, surrender, cash);
+        return result;
+    }
+
+    public boolean isDoubled() {
+        return doubled;
+    }
+
+    public void doubleStake() {
+        doubled = true;
+        betAmount *= 2;
+    }
+
+    public Ending playDealer() {
+        setPlayerTurn(false);
+        while (getScoreUnder21(houseCards) < 17) {
+            getNextCard();
+        }
+        int dealer = getScoreUnder21(houseCards);
+        int playerScore = getScoreUnder21(playerCards);
+        if (dealer > 21 || playerScore > dealer) return Ending.WIN;
+        if (playerScore == dealer) return Ending.TIE;
+        return Ending.LOSE;
     }
 
     public UUID getUuid() {
         return uuid;
     }
 
-    public void updateInventoryForHouse() {
-        player.openInventory(getInventory(false, false));
-    }
-
     public ArrayList<String> getPlayerCards() {
         return playerCards;
-    }
-
-    public void setBlackjack(boolean blackjack) {
-        this.blackjack = blackjack;
-    }
-
-    public boolean isBlackjackEnding() {
-        return blackjack;
     }
 
     public ArrayList<String> getHouseCards() {
@@ -96,36 +108,22 @@ public class BlackjackGame {
      * @return most optimal score under 21 for the cards
      */
     public int getScoreUnder21(List<String> cards) {
-        List<String> cardsToRemoveAndAdd = new ArrayList<>();
-
-        for (String s : cards) {
-            if (s.startsWith("A")) {
-                cardsToRemoveAndAdd.add(s);
-            }
-        }
-        cards.removeAll(cardsToRemoveAndAdd);
-        cards.addAll(cardsToRemoveAndAdd);
-
         int score = 0;
-        for (String s : cards) {
-            if (!s.startsWith("A")) {
-                score += valueOfCard(s);
+        boolean hasAce = false;
+        for (String card : cards) {
+            if (card.startsWith("A")) {
+                hasAce = true;
+                score++;
             } else {
-                if (score + 11 <= 21) {
-                    score += 11;
-                } else  {
-                    score += 1;
-                }
+                score += valueOfCard(card);
             }
         }
-        return score;
-
+        return hasAce && score <= 11 ? score + 10 : score;
     }
 
 
-    public Inventory getInventory(boolean hideHouse, boolean isDoubleDown) {
+    public void fillInventory(Inventory inventory) {
         Blackjack plugin = Blackjack.getInstance();
-        Inventory inventory = Bukkit.createInventory(null, 54, Blackjack.getInstance().getString("menu-title").replace("$number$", "" + betAmount));
         ItemBuilder tutorial = new ItemBuilder(XMaterial.PAPER.parseItem());
         tutorial.name(plugin.getString("tutorial-name"));
         inventory.setItem(0, tutorial.build());
@@ -142,7 +140,7 @@ public class BlackjackGame {
         inventory.setItem(36, sign.build());
 
 
-        if(!isDoubleDown) {
+        if(!doubled) {
             ItemBuilder hit = new ItemBuilder(XMaterial.MAP.parseItem());
             hit.name(Blackjack.getInstance().getString("hit-item"));
             inventory.setItem(22, hit.build());
@@ -152,14 +150,14 @@ public class BlackjackGame {
         stand.name(Blackjack.getInstance().getString("stand-item"));
         inventory.setItem(31, stand.build());
 
-        if(plugin.isSurrenderEnabled() && !isDoubleDown) {
+        if(plugin.isSurrenderEnabled() && !doubled) {
             ItemBuilder surrender = new ItemBuilder(XMaterial.OAK_DOOR.parseItem());
             surrender.name(Blackjack.getInstance().getString("surrender-item"));
             surrender.lore(Blackjack.getInstance().getString("surrender-lore"));
             inventory.setItem(32, surrender.build());
         }
         if(plugin.isDoubleDownEnabled() && playerCards.size() == 2) {
-            if (Blackjack.getEconomy().getBalance(player) >= betAmount  || plugin.isDoubleDownOverFlow()){
+            if (plugin.getPlayerFor(player).getBalance() >= betAmount  || plugin.isDoubleDownOverFlow()){
                 ItemBuilder doubleDown = new ItemBuilder(XMaterial.NETHER_STAR.parseItem());
                 doubleDown.name(Blackjack.getInstance().getString("double-down-item"));
                 doubleDown.lore(Blackjack.getInstance().getString("double-down-lore"));
@@ -175,7 +173,7 @@ public class BlackjackGame {
 
 
         int dealersSlot = 11;
-        if (hideHouse) {
+        if (isPlayerTurn()) {
             for (String card : houseCards) {
                 if (dealersSlot == 11) {
                     inventory.setItem(dealersSlot, cardAsItemStack(card, true));
@@ -192,7 +190,7 @@ public class BlackjackGame {
             }
         }
 
-        return inventory;
+
 
     }
 
@@ -278,46 +276,6 @@ public class BlackjackGame {
         return identifier + " of " + suit;
     }
 
-
-    public double getResult(){
-        Blackjack plugin = Blackjack.getInstance();
-
-        if(end != null){
-            switch (end){
-                case TIE: return 0;
-                case WIN:
-                    int playerScore = getScoreUnder21(getPlayerCards());
-
-                    if(plugin.getTaxPercent() != 0.0 && plugin.getTaxPercent() <= 100.0) {
-                        double tax = plugin.getTaxPercent() / 100.0;
-                        double postTax = betAmount - (tax * betAmount);
-                        if(playerScore == 21 && plugin.getBlackJackMultiplier() > 1) {
-                            return plugin.getBlackJackMultiplier() * postTax;
-                        }
-                            return postTax;
-                    } else {
-                        if(playerScore == 21 && plugin.getBlackJackMultiplier() > 1) {
-                            return plugin.getBlackJackMultiplier() * betAmount;
-
-                        }
-                            return betAmount;
-                    }
-                case LOSE:
-                    return -betAmount;
-                case SURRENDER:
-                    double surrender = betAmount - (betAmount * (plugin.getSurrenderPercentage() / 100));
-
-                    return -surrender;
-            }
-        }
-        return Double.MAX_VALUE;
-    }
-
-
-
-    public boolean equals(BlackjackGame game){
-        return game.getUuid().equals(getUuid());
-    }
 
     private int valueOfCard(String card) {
         // make sure this is right and its not 1 because starting at 0

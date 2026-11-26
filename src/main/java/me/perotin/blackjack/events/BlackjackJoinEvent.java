@@ -25,9 +25,7 @@ public class BlackjackJoinEvent implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent event){
         Player joiner = event.getPlayer();
-        if(plugin.getPlayerFor(joiner) ==null){
-            plugin.getPlayers().add(BlackjackPlayer.loadPlayer(joiner));
-        }
+        plugin.getPlayerFor(joiner);
         // Do a check to see if they are rejoining after being mid-game to notify them
         if (quitterMidGame.containsKey(joiner.getUniqueId())) {
             joiner.sendMessage(plugin.getString("quitter-mid-game")

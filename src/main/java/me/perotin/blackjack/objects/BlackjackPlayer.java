@@ -63,7 +63,7 @@ public class BlackjackPlayer  {
             return Blackjack.getEconomy().getBalance(Bukkit.getOfflinePlayer(uuid));
         } else {
 
-            return Bukkit.getPlayer(uuid).getExpToLevel();
+            return Bukkit.getPlayer(uuid).getLevel();
         }
     }
 }
