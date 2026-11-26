@@ -3,7 +3,6 @@ package me.perotin.blackjack.objects;
 import me.perotin.blackjack.Blackjack;
 import me.perotin.blackjack.util.ItemBuilder;
 import me.perotin.blackjack.util.XMaterial;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -19,216 +18,125 @@ import java.util.stream.IntStream;
 /* Created by Perotin on 6/28/19 */
 public class GameSession {
 
-    private UUID uuid;
-    private List<BlackjackGame> games;
+    private final UUID uuid;
+    private final List<BlackjackGame> games = new ArrayList<>();
+    private BlackjackMenu menu;
     private double betAmount;
-
 
     public GameSession(UUID uuid, BlackjackGame game) {
         this.uuid = uuid;
-        this.games = new ArrayList<>();
         games.add(game);
-        this.betAmount = game.getBetAmount();
+        betAmount = game.getBetAmount();
     }
 
+    public UUID getUuid() { return uuid; }
 
+    public List<BlackjackGame> getGames() { return games; }
 
-    public double getBetAmount() {
-        return betAmount;
+    public double getBetAmount() { return betAmount; }
+
+    public void setBetAmount(double amount) { this.betAmount = amount; }
+
+    public BlackjackGame latestGame() { return games.get(games.size() - 1); }
+
+    public BlackjackGame hasOngoingGame() {
+        BlackjackGame game = latestGame();
+        return game.getSettlement() == null ? game : null;
     }
 
-    public void setBetAmount(double betAmount) {
-        this.betAmount = betAmount;
-    }
-
-    private double getTotalEarnings(){
-        double earnings = 0;
-        for(BlackjackGame game : games){
-            earnings += game.getResult();
-        }
-        return earnings;
-        
-    }
-
-    public BlackjackGame hasOngoingGame(){
+    private double getTotalEarnings() {
+        double total = 0;
         for (BlackjackGame game : games) {
-            if (game.getResult() == Double.MAX_VALUE) return game;
+            if (game.getSettlement() != null) total += game.getSettlement().net;
         }
-        return null;
+        return total;
     }
-    public double getBetOfOngoingGame(){
+
+    private Player getPlayer() { return latestGame().getPlayer(); }
+
+    public boolean ownsMenu(Inventory inventory) {
+        return menu != null && inventory.getHolder() == menu;
+    }
+
+    public void openGame() {
         BlackjackGame game = hasOngoingGame();
-        if (game == null) return -1;
-        return game.getBetAmount();
+        if (game == null) return;
+        String title = Blackjack.getInstance().getString("menu-title").replace("$number$", "" + game.getBetAmount());
+        menu = new BlackjackMenu(54, title);
+        game.fillInventory(menu.getInventory());
+        getPlayer().openInventory(menu.getInventory());
     }
 
-
-    public UUID getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(UUID uuid) {
-        this.uuid = uuid;
-    }
-
-    public List<BlackjackGame> getGames() {
-        return games;
-    }
-
-    public void addGame(List<BlackjackGame> games) {
-        this.games.addAll(games);
-    }
-
-    private Player getPlayer(){
-        return Bukkit.getPlayer(uuid);
-    }
-
-    public void endSession(){
-       getPlayer().closeInventory();
-
-        ItemBuilder stopPlaying = new ItemBuilder(XMaterial.REDSTONE.parseItem());
-        stopPlaying.name(Blackjack.getInstance().getString("stop-playing"));
-
-       if(getTotalEarnings() > 0) {
-           getPlayer().sendMessage(Blackjack.getInstance().getString("session-ending")
-                   .replace("$amount$", games.size() + "").replace("$outcome$", ChatColor.GREEN + "+"+getTotalEarnings() + ""));
-       } else if (getTotalEarnings() < 0) {
-           getPlayer().sendMessage(Blackjack.getInstance().getString("session-ending")
-                   .replace("$amount$", games.size() + "").replace("$outcome$", ChatColor.RED + ""+getTotalEarnings()));
-        } else {
-           getPlayer().sendMessage(Blackjack.getInstance().getString("session-ending")
-                   .replace("$amount$", games.size() + "").replace("$outcome$", getTotalEarnings()+"" ));
-       }
-       Blackjack.getInstance().getSessions().remove(this);
-
-//       Bukkit.getScheduler().runTaskLater(Blackjack.getInstance(), () -> {
-
-
-
-
-           if (getPlayer().getInventory().contains(stopPlaying.build())) {
-               // people can shift click item into their inventory so remove it
-               getPlayer().getInventory().remove(stopPlaying.build());
-
-           }
-//       },10);
-    }
-
-
-    public void endGame(BlackjackGame game, BlackjackGame.Ending end) {
+    public void endSession() {
+        menu = null;
         Blackjack plugin = Blackjack.getInstance();
-        getPlayer().sendMessage(plugin.getString("end-game")
-                .replace("$score$", game.getScoreUnder21(game.getPlayerCards()) + "")
-                .replace("$score2$", game.getScoreUnder21(game.getHouseCards()) + ""));
-        game.setEnd(end);
-        double betAmount = game.getBetAmount();
-        Player player = game.getPlayer();
-        int playerScore = game.getScoreUnder21(game.getPlayerCards());
-        double multiplierAmount = (plugin.getBlackJackMultiplier() * betAmount) + betAmount;
-        boolean blackJack = false;
-        if (end == BlackjackGame.Ending.WIN) {
-
-            boolean taxxed = false;
-            if (plugin.getTaxPercent() != 0.0 && plugin.getTaxPercent() <= 100.0) {
-                double tax = plugin.getTaxPercent() / 100.0;
-                double postTax = betAmount - (tax * betAmount);
-                if(playerScore == 21 && game.getPlayerCards().size() == 2  && plugin.getBlackJackMultiplier() > 1) {
-                    blackJack = true;
-                    game.setBlackjack(true);
-
-                    Blackjack.deposit( (plugin.getBlackJackMultiplier()*postTax) + betAmount, player);
-                } else {
-                    Blackjack.deposit( postTax + betAmount, player);
-                }
-                taxxed = true;
-            } else {
-                if(playerScore == 21 && plugin.getBlackJackMultiplier() > 1 && game.getPlayerCards().size() == 2) {
-                    blackJack = true;
-                    game.setBlackjack(true);
-
-                    Blackjack.deposit(multiplierAmount, player);
-                } else {
-                     Blackjack.deposit( betAmount + betAmount, player);
-
-                }
-
-            }
-
-
-//            player.sendMessage(plugin.getString("earnings")
-//                    .replace("$result$", plugin.getString("won"))
-//                    .replace("$number$", earnings + ""));
-
-            if(blackJack) {
-                plugin.setServerImpact(plugin.getServerImpact() - (plugin.getBlackJackMultiplier()* betAmount));
-            } else plugin.setServerImpact(plugin.getServerImpact() - betAmount);
-
-            plugin.increaseGamesPlayed();
-            plugin.increaseServerLosses();
-
-                if (taxxed) {
-                    double tax = plugin.getTaxPercent() / 100.0;
-                    double postTax = tax * betAmount;
-
-                    player.sendMessage(plugin.getString("taxxed").replace("$amount$", postTax+""));
-                } else {
-                    if(blackJack){
-                    player.sendMessage(plugin.getString("blackjack-win").replace("$amount$", plugin.getConfig().getDouble("multiplier")+"")+
-                            ChatColor.GREEN + "+" + (plugin.getBlackJackMultiplier() * betAmount));
-                } else {
-                        player.sendMessage( plugin.getString("amount-added").replace("$amount$", betAmount+""));
-                    }
-                }
-
-        } else if (end == BlackjackGame.Ending.LOSE) {
-
-//            player.sendMessage(plugin.getString("earnings")
-//                    .replace("$result$", plugin.getString("lost"))
-//                    .replace("$number$", getBetAmount() + ""));
-            plugin.setServerImpact(plugin.getServerImpact() + betAmount);
-            plugin.increaseGamesPlayed();
-            plugin.increaseServerWins();
-            player.sendMessage( plugin.getString("amount-subtracted").replace("$amount$", betAmount+""));
-
-
-        } else if (end == BlackjackGame.Ending.TIE) {
-            // tie
-            //player.sendMessage(plugin.getString("tied"));
-           Blackjack.deposit(betAmount, player);
-            plugin.increaseGamesPlayed();
-        } else {
-            // they surrender
-            double surrender = betAmount - (betAmount * (plugin.getSurrenderPercentage() / 100));
-//            player.sendMessage(plugin.getString("surrender-message")
-//            .replace("$amount$", surrender+"").replace("$bet$", betAmount+""));
-
-            Blackjack.deposit(surrender, player);
-            plugin.setServerImpact(plugin.getServerImpact() + surrender);
-            plugin.increaseGamesPlayed();
-            plugin.increaseServerWins();
-            player.sendMessage( plugin.getString("amount-subtracted").replace("$amount$", surrender+""));
-
-
-        }
-
-        showEndMenu(game);
-
+        plugin.getSessions().remove(this);
+        getPlayer().closeInventory();
+        double total = getTotalEarnings();
+        String display = total > 0 ? ChatColor.GREEN + "+" + total : Double.toString(total);
+        getPlayer().sendMessage(plugin.getString("session-ending")
+                .replace("$amount$", Integer.toString(games.size())).replace("$outcome$", display));
     }
 
-    public void startNewGame(){
-        BlackjackPlayer player = Blackjack.getInstance().getPlayerFor(getPlayer());
-        if(player.getBalance() >= betAmount) {
-            BlackjackGame game = new BlackjackGame(getPlayer(), betAmount);
-            getGames().add(game);
-             Blackjack.withdraw(betAmount, getPlayer());
+    public void forfeitAndClose() {
+        BlackjackGame game = hasOngoingGame();
+        if (game != null) settle(game, BlackjackGame.Ending.LOSE, false);
+        endSession();
+    }
 
-            getPlayer().openInventory(game.getInventory(true, false));
-        } else {
-            getPlayer().closeInventory();
-            endSession();
-            getPlayer().sendMessage(Blackjack.getInstance().getString("cannot-bet-that-much"));
+    public void endGame(BlackjackGame game, BlackjackGame.Ending ending) {
+        settle(game, ending, true);
+    }
+
+    private void settle(BlackjackGame game, BlackjackGame.Ending ending, boolean showMenu) {
+        if (game != hasOngoingGame()) return;
+        Blackjack plugin = Blackjack.getInstance();
+        Player player = getPlayer();
+        RoundResult result = game.finish(ending, plugin.getBlackJackMultiplier(), plugin.getTaxPercent(),
+                plugin.getSurrenderPercentage(), plugin.isUsingCash());
+        if (result == null) return;
+        if (!plugin.deposit(result.payout, player)) {
+            boolean saved = PendingPayout.save(plugin, player, game.getUuid(), result);
+            plugin.getSessions().remove(this);
+            menu = null;
+            player.closeInventory();
+            if (saved) {
+                player.sendMessage("Your payout was declined. Use /blackjack to retry before your next bet.");
+            } else {
+                player.sendMessage("Your payout requires administrator review. Round: " + game.getUuid());
+            }
+            return;
         }
+        plugin.recordOutcome(player, ending, result.net);
+        if (!showMenu) return;
+        player.sendMessage(plugin.getString("end-game")
+                .replace("$score$", "" + game.getScoreUnder21(game.getPlayerCards()))
+                .replace("$score2$", "" + game.getScoreUnder21(game.getHouseCards())));
+        if (result.tax > 0) {
+            player.sendMessage(plugin.getString("taxxed").replace("$amount$", "" + result.tax));
+        }
+        if (result.blackjack) {
+            player.sendMessage(plugin.getString("blackjack-win").replace("$amount$", "" + plugin.getBlackJackMultiplier())
+                    + ChatColor.GREEN + "+" + result.net);
+        } else if (ending == BlackjackGame.Ending.TIE) {
+            player.sendMessage(plugin.getString("tied"));
+        } else {
+            String message = result.net < 0 ? "amount-subtracted" : "amount-added";
+            player.sendMessage(plugin.getString(message).replace("$amount$", "" + Math.abs(result.net)));
+        }
+        showEndMenu(game);
+    }
 
+    public void startNewGame() {
+        if (hasOngoingGame() != null) return;
+        Blackjack plugin = Blackjack.getInstance();
+        Player player = getPlayer();
+        if (plugin.getPlayerFor(player).getBalance() < betAmount || !plugin.withdraw(betAmount, player)) {
+            player.sendMessage(plugin.getString("cannot-bet-that-much"));
+            return;
+        }
+        games.add(new BlackjackGame(player, betAmount));
+        openGame();
     }
 
     public void showEndMenu(BlackjackGame game){
@@ -245,7 +153,8 @@ public class GameSession {
 
         String name = plugin.getString("continue-playing")
                 .replace("$player$", game.getPlayer().getName());
-        Inventory menu = Bukkit.createInventory(null, 36, name);
+        this.menu = new BlackjackMenu(36, name);
+        Inventory menu = this.menu.getInventory();
         IntStream.range(0, 10).forEach(i -> menu.setItem(i, new ItemBuilder(XMaterial.BLACK_STAINED_GLASS_PANE.parseItem().getType()).name("").build()));
         IntStream.range(27, 36).forEach(i -> menu.setItem(i, new ItemBuilder(XMaterial.BLACK_STAINED_GLASS_PANE.parseItem().getType()).name("").build()));
         menu.setItem(18, new ItemBuilder(XMaterial.BLACK_STAINED_GLASS_PANE.parseMaterial()).name(" ").build());
@@ -256,7 +165,7 @@ public class GameSession {
         menu.setItem(5, new ItemBuilder(XMaterial.BOOKSHELF.parseMaterial()).name(plugin.getString("player-cards") + game.getScoreUnder21(game.getPlayerCards())).build());
 
 
-        if(game.getScoreUnder21(game.getPlayerCards()) == 21 && game.getResult() > 0 && game.isBlackjackEnding()){
+        if(game.getSettlement().blackjack){
             //blackjack
             BukkitRunnable runnable = new BukkitRunnable() {
                 int counter = 0;
@@ -313,7 +222,7 @@ public class GameSession {
 
 
         ItemBuilder gameEarnings = new ItemBuilder(XMaterial.ENCHANTED_BOOK.parseItem());
-        gameEarnings.name(plugin.getString("earnings-gui")).lore(ChatColor.GRAY + ""+game.getResult());
+        gameEarnings.name(plugin.getString("earnings-gui")).lore(ChatColor.GRAY + ""+game.getSettlement().net);
         menu.setItem(13, gameEarnings.build());
 
         ItemBuilder keepPlaying = new ItemBuilder(XMaterial.EMERALD.parseItem());

@@ -5,7 +5,6 @@ import me.perotin.blackjack.commands.BlackjackCommand;
 import me.perotin.blackjack.events.BlackjackInventoryClickEvent;
 import me.perotin.blackjack.events.BlackjackJoinEvent;
 import me.perotin.blackjack.events.BlackjackLeaveMidGameEvent;
-import me.perotin.blackjack.events.BlackjackSessionClickEvent;
 import me.perotin.blackjack.objects.BlackFile;
 import me.perotin.blackjack.objects.BlackjackGame;
 import me.perotin.blackjack.objects.BlackjackPlayer;
@@ -20,7 +19,8 @@ import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.HashSet;
-import java.util.Set;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.UUID;
 
 import static me.perotin.blackjack.objects.BlackFile.BlackFilesType.STATS;
@@ -28,33 +28,14 @@ import static me.perotin.blackjack.objects.BlackFile.BlackFilesType.STATS;
 /* Created by Perotin on 12/24/18 */
 public class Blackjack extends JavaPlugin {
 
-    /*
-    TODO
-    new to config.yml
-
-# Should doubling down be enabled (double your bet amount but forced to stand after drawing 1 more card)
-enable-double-down: true
-
-# If double down is enabled, and a person doubles down without enough funds to cover the cost of a loss,
-# should they still be rewarded the 2x multiplier?
-# E.g. player A bets all $100 they own, they then double down making the bet $200, they then lose and hence lose
-# $200. However, a lot of economies do not use negative balances so they would really only lose $100.
-# I'd recommend keeping this false unless your economy allows for players to have negative balances
-double-down-overflow: false
-
-double-down-item: "&eDouble Down"
-double-down-lore: "&7&o(Double the bet amount and stand after 1 more card)"
-     */
-
     private static Blackjack instance;
-   // private HashSet<BlackjackGame> currentGames;
     private HashSet<GameSession> sessions;
     private static Economy econ = null;
     private boolean overFlow;
     /** @apiNote true if cash, false if exp **/
     private boolean cash;
-    //private boolean forceForfeit;
-    private Set<BlackjackPlayer> players;
+    private final Map<UUID, BlackjackPlayer> players = new HashMap<>();
+    private boolean initialized;
     private double taxPercent, betMin, betMax = 0;
     // stats for admins
     private double serverImpact;
@@ -73,16 +54,12 @@ double-down-lore: "&7&o(Double the bet amount and stand after 1 more card)"
             "Ad",  "2d", "3d", "4d", "5d", "6d", "7d", "8d", "9d", "10d", "Jd", "Qd", "Kd"};
     @Override
     public void onEnable(){
-        Metrics metrics = new Metrics(this, 4614);
+        instance = this;
         this.serverWins = 0;
         this.sessions = new HashSet<>();
         this.games = 0;
         this.serverLosses = 0;
         this.cash = getConfig().getBoolean("cash-or-xp");
-        //this.forceForfeit = getConfig().getBoolean("force-forfeit");
-
-
-
         this.surrender = getConfig().getBoolean("enable-surrender");
         this.doubleDown = getConfig().getBoolean("enable-double-down");
         this.doubleDownOverFlow = getConfig().getBoolean("double-down-overflow");
@@ -93,65 +70,97 @@ double-down-lore: "&7&o(Double the bet amount and stand after 1 more card)"
         if(getConfig().getBoolean("enable-multiplier")){
             this.blackJackMultiplier = getConfig().getDouble("multiplier");
         } else this.blackJackMultiplier = 0;
-        new UpdateChecker(this).checkForUpdate();
-        if(isUsingCash()) {
-            setupEconomy();
+        if (cash && !setupEconomy()) {
+            // Other Vault providers may register later in the same server startup.
+            Bukkit.getScheduler().runTask(this, () -> {
+                if (setupEconomy()) enableGame();
+                else {
+                    getLogger().severe("Cash betting requires Vault and a registered economy provider.");
+                    getServer().getPluginManager().disablePlugin(this);
+                }
+            });
+            return;
         }
-        //currentGames = new HashSet<>();
-        players = new HashSet<>();
-        instance = this;
-        this.taxPercent = getConfig().getDouble("tax-percent");
+        enableGame();
+    }
+
+    private void enableGame() {
+        if (!Double.isFinite(surrenderPercentage) || surrenderPercentage < 0 || surrenderPercentage > 100
+                || !Double.isFinite(blackJackMultiplier) || blackJackMultiplier < 0) {
+            getLogger().severe("Invalid surrender percentage or blackjack multiplier in config.yml.");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        taxPercent = getConfig().getDouble("tax-percent");
+        if (!Double.isFinite(taxPercent) || taxPercent < 0 || taxPercent > 100) {
+            getLogger().severe("tax-percent must be between 0 and 100.");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+        new Metrics(this, 4614);
+        new UpdateChecker(this).checkForUpdate();
         this.betMax = getConfig().getDouble("bet-max");
         this.betMin = getConfig().getDouble("bet-min");
         setServerImpact(new BlackFile(STATS).getConfiguration().getDouble("server-impact"));
 
         saveDefaultConfig();
-        // custom command string, remember that kangarko stuff ye
         getCommand("blackjack").setExecutor(new BlackjackCommand(this));
         getCommand("blackjackadmin").setExecutor(new BlackjackAdminCommand(this));
         Bukkit.getPluginManager().registerEvents(new BlackjackInventoryClickEvent(this), this);
         Bukkit.getPluginManager().registerEvents(new BlackjackJoinEvent(this), this);
-        Bukkit.getPluginManager().registerEvents(new BlackjackSessionClickEvent(this), this);
         Bukkit.getPluginManager().registerEvents(new BlackjackLeaveMidGameEvent(this), this);
-
-//        if(false){
-//            Bukkit.getPluginManager().registerEvents(new BlackjackLeaveMidGameEvent(this), this);
-//        }
 
         this.overFlow = getConfig().getBoolean("bet-overflow");
         BlackFile.loadFiles();
 
+        initialized = true;
         for(Player player : Bukkit.getOnlinePlayers()){
-            players.add(BlackjackPlayer.loadPlayer(player));
+            getPlayerFor(player);
         }
 
     }
 
-    public static void withdraw(double amount, Player player){
-        if(Blackjack.getInstance().isUsingCash()){
-           Blackjack.getEconomy().withdrawPlayer(player, amount);
-
-        } else {
-            // using exp
-
-            player.setLevel(player.getLevel() - (int) amount);
-        }
+    public boolean validStake(double amount) {
+        if (!Double.isFinite(amount) || amount < 0) return false;
+        if (!Double.isFinite(amount * (1 + Math.max(1, blackJackMultiplier)))) return false;
+        return cash || (amount == Math.floor(amount) && amount <= Integer.MAX_VALUE);
     }
 
-    public static void deposit(double amount, Player player){
-        if(Blackjack.getInstance().isUsingCash()){
-         Blackjack.getEconomy().depositPlayer(player, amount);
-
-        } else {
-            // using exp
-            player.setLevel(player.getLevel() + (int) amount);
-        }
+    public boolean withdraw(double amount, Player player) {
+        if (!validStake(amount)) return false;
+        if (amount == 0) return true;
+        if (cash) return econ.withdrawPlayer(player, amount).transactionSuccess();
+        if (amount > player.getLevel()) return false;
+        player.setLevel(player.getLevel() - (int) amount);
+        return true;
     }
 
-//
-//    public boolean isForceForfeit() {
-//        return forceForfeit;
-//    }
+    public boolean deposit(double amount, Player player) {
+        if (!Double.isFinite(amount) || amount < 0) return false;
+        if (amount == 0) return true;
+        if (cash) return econ.depositPlayer(player, amount).transactionSuccess();
+        if (amount > Integer.MAX_VALUE - player.getLevel()) return false;
+        player.setLevel(player.getLevel() + (int) amount);
+        return true;
+    }
+
+    public void recordOutcome(Player player, BlackjackGame.Ending outcome, double net) {
+        serverImpact -= net;
+        games++;
+        switch (outcome) {
+            case WIN:
+                getPlayerFor(player).addWin();
+                serverLosses++;
+                break;
+            case SURRENDER:
+            case LOSE:
+                getPlayerFor(player).addLoss();
+                serverWins++;
+                break;
+            case TIE:
+                break;
+        }
+    }
 
     public double getBlackJackMultiplier() {
         return blackJackMultiplier;
@@ -238,10 +247,14 @@ double-down-lore: "&7&o(Double the bet amount and stand after 1 more card)"
 
     @Override
     public void onDisable(){
+        if (!initialized) return;
+        initialized = false;
+        for (GameSession session : new HashSet<>(sessions)) {
+            session.forfeitAndClose();
+        }
         BlackFile file = new BlackFile(STATS);
-        sessions.forEach(GameSession::endSession);
 
-        players.stream().forEach(player ->{
+        players.values().forEach(player ->{
             file.set(player.getUuid().toString()+".wins", player.getWins());
             file.set(player.getUuid().toString()+".losses", player.getLosses());
         });
@@ -254,6 +267,7 @@ double-down-lore: "&7&o(Double the bet amount and stand after 1 more card)"
         file.set("server-wins", getTotalServerWins());
         file.set("server-losses", getTotalServerLosses());
         file.save();
+        econ = null;
 
     }
 
@@ -264,14 +278,7 @@ double-down-lore: "&7&o(Double the bet amount and stand after 1 more card)"
 
     public BlackjackPlayer getPlayerFor(Player p){
 
-       //return players.stream().filter(p -> uuid.equals(p.getUuid())).collect(Collectors.toList()).get(0);
-        if(!players.isEmpty()){
-            for(BlackjackPlayer player : players){
-                if(player.getUuid().equals(p.getUniqueId())) return player;
-            }
-        }
-        return BlackjackPlayer.loadPlayer(p);
-
+        return players.computeIfAbsent(p.getUniqueId(), uuid -> BlackjackPlayer.loadPlayer(p));
     }
 
     public GameSession getSessionFor(BlackjackGame game){
@@ -292,10 +299,6 @@ double-down-lore: "&7&o(Double the bet amount and stand after 1 more card)"
         }
         return null;
     }
-    public Set<BlackjackPlayer> getPlayers() {
-        return players;
-    }
-
     public boolean isOverflow() {
         return this.overFlow;
     }

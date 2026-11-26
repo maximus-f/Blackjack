@@ -2,302 +2,105 @@ package me.perotin.blackjack.events;
 
 import me.perotin.blackjack.Blackjack;
 import me.perotin.blackjack.objects.BlackjackGame;
-import me.perotin.blackjack.objects.BlackjackPlayer;
+import me.perotin.blackjack.objects.BlackjackMenu;
 import me.perotin.blackjack.objects.GameSession;
-import me.perotin.blackjack.util.ItemBuilder;
-import me.perotin.blackjack.util.XMaterial;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryView;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
-
-/* Created by Perotin on 12/27/18 */
 public class BlackjackInventoryClickEvent implements Listener {
-
-    private Blackjack plugin;
-
-    private int houseIndex = 1;
+    private final Blackjack plugin;
 
     public BlackjackInventoryClickEvent(Blackjack plugin) {
         this.plugin = plugin;
     }
 
-    private HashMap<UUID, BukkitRunnable> inTutorial = new HashMap<>();
-
-
-    private void updateInventoryForStay(final ArrayList<String> houseCards, Inventory clicked, Player clicker, int x) {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                ItemStack toUpdate = clicked.getItem(x);
-                if (toUpdate != null && toUpdate.getType() != XMaterial.AIR.parseMaterial() && toUpdate.getType() == XMaterial.RED_STAINED_GLASS_PANE.parseMaterial()) {
-                    // update it
-                    ItemBuilder builder = new ItemBuilder(toUpdate);
-                    builder.type(XMaterial.GREEN_STAINED_GLASS_PANE.parseMaterial());
-                    if(houseIndex < houseCards.size()) {
-                        builder.name(ChatColor.YELLOW + BlackjackGame.convertToFullText(houseCards.get(houseIndex)));
-                    }
-                    houseIndex++;
-                    if (houseIndex >= houseCards.size() - 1) {
-                        houseIndex = 1;
-                    }
-                    clicked.setItem(x, builder.build());
-
-                }
-
-            }
-        }.runTaskLater(plugin, 20);
-    }
-
-
     @EventHandler
-    public void onChat(AsyncPlayerChatEvent event) {
-        if (inTutorial.containsKey(event.getPlayer().getUniqueId())) {
-            event.setCancelled(true);
-            if (event.getMessage().equalsIgnoreCase("cancel")) {
-                inTutorial.remove(event.getPlayer());
-
-            }
-        }
+    public void onDrag(InventoryDragEvent event) {
+        if (event.getInventory().getHolder() instanceof BlackjackMenu) event.setCancelled(true);
     }
 
     @EventHandler
     public void onClick(InventoryClickEvent event) {
-        Inventory clicked = event.getInventory();
-        InventoryView view = event.getView();
-        if (event.getWhoClicked() instanceof Player) {
-            Player clicker = (Player) event.getWhoClicked();
-
-            BlackjackPlayer player = plugin.getPlayerFor(clicker);
-
-            BlackjackGame currentGame = null;
-            GameSession session = null;
-            if(plugin.getSessionFor(clicker.getUniqueId()) != null) {
-                for (BlackjackGame game : plugin.getSessionFor(clicker.getUniqueId()).getGames()) {
-                    if (game.getPlayer().getUniqueId().equals(clicker.getUniqueId())) {
-                        // same player
-                        String name = plugin.getString("menu-title").replace("$number$", "" + game.getBetAmount());
-                        if (event.getView().getTitle().equals(name)) {
-                            // same inventory, its safe to say its a game click
-                            currentGame = game;
-                            session = plugin.getSessionFor(clicker.getUniqueId());
-                        }
-
-
-                    }
+        Inventory inventory = event.getInventory();
+        if (!(inventory.getHolder() instanceof BlackjackMenu)) return;
+        event.setCancelled(true);
+        if (!(event.getWhoClicked() instanceof Player)) return;
+        Player player = (Player) event.getWhoClicked();
+        GameSession session = plugin.getSessionFor(player.getUniqueId());
+        if (session == null || !session.ownsMenu(inventory)) return;
+        int slot = event.getRawSlot();
+        if (slot < 0 || slot >= inventory.getSize() || inventory.getItem(slot) == null) return;
+        BlackjackGame game = session.hasOngoingGame();
+        if (game == null) {
+            clickResults(session, player, slot);
+            return;
+        }
+        switch (slot) {
+            case 0:
+                player.closeInventory();
+                for (String line : plugin.getConfig().getStringList("tutorial")) {
+                    player.sendMessage(org.bukkit.ChatColor.translateAlternateColorCodes('&', line));
                 }
-            }
-
-
-            if (currentGame != null && session != null) {
-                event.setCancelled(true);
-                ItemStack item = event.getCurrentItem();
-                if (item != null && item.getType() != XMaterial.AIR.parseMaterial()) {
-                    // its a block
-                    if (item.getType() == XMaterial.PAPER.parseMaterial() && item.getItemMeta().getDisplayName().equals(plugin.getString("tutorial-name"))) {
-                        // tutorial
-                        clicker.closeInventory();
-                        List<String> tutorialMessages = plugin.getConfig().getStringList("tutorial");
-                        for (String s : tutorialMessages) {
-
-                            clicker.sendMessage(ChatColor.translateAlternateColorCodes('&', s));
-
-                        }
-
-                        // some weird inventory thing is happening with 41 as length of contents
-                        ItemBuilder tutorial = new ItemBuilder(XMaterial.PAPER.parseItem());
-                        tutorial.name(plugin.getString("tutorial-name"));
-
-                        Bukkit.getScheduler().runTaskLater(Blackjack.getInstance(), () -> {
-
-                            if (clicker.getOpenInventory().getBottomInventory().contains(tutorial.build())) {
-                                // people can shift click item into their inventory so remove it
-                                clicker.getInventory().remove(tutorial.build());
-
-                            }
-                        },20*2);
-
-
-                    }
-                    if (item.getType() == XMaterial.OAK_DOOR.parseMaterial() && item.getItemMeta().getDisplayName().equals(plugin.getString("surrender-item"))) {
-                        // they surrender
-                        session.endGame(currentGame,BlackjackGame.Ending.SURRENDER);
-
-                    }
-                    if (item.getType() == XMaterial.NETHER_STAR.parseMaterial() && item.getItemMeta().getDisplayName().equals(plugin.getString("double-down-item"))) {
-                        // they double down
-                        // Double the bet amount and show them the new inventory where
-                        // only option is to stand after they gained a new card
-                        // ensure that they only see the nether star if it is the first move
-                        Blackjack.withdraw(currentGame.getBetAmount(), currentGame.getPlayer());
-
-                        currentGame.setBetAmount(currentGame.getBetAmount()*2);
-                        // Withdraw bet amount again
-                        currentGame.getNextCard();
-                        int score = currentGame.getScoreUnder21(currentGame.getPlayerCards());
-                        if (score > 21) {
-                            // they lose
-                            session.endGame(currentGame, BlackjackGame.Ending.LOSE);
-                            player.addLoss();
-                            return;
-                        }
-                        clicker.openInventory(currentGame.getInventory(true, true));
-
-                    }
-
-                        if (item.getType() == XMaterial.MAP.parseMaterial() && item.getItemMeta().getDisplayName().equals(plugin.getString("hit-item"))) {
-                        // they hit
-                        currentGame.getNextCard();
-                        int score = currentGame.getScoreUnder21(currentGame.getPlayerCards());
-                        if (score > 21) {
-                            // they lose
-                            session.endGame(currentGame, BlackjackGame.Ending.LOSE);
-                            player.addLoss();
-                            return;
-                        }
-                        clicker.openInventory(currentGame.getInventory(true, false));
-
-
-                    } else if (item.getType() == XMaterial.BARRIER.parseMaterial() && item.getItemMeta().getDisplayName().equals(plugin.getString("stand-item"))) {
-                        // they stand
-                        currentGame.setPlayerTurn(false);
-                        int houseScore = currentGame.getScoreUnder21(currentGame.getHouseCards());
-                        if (houseScore >= 17) {
-                            // stay
-                            int playerScore = currentGame.getScoreUnder21(currentGame.getPlayerCards());
-
-                            final ArrayList<String> houseCards = currentGame.getHouseCards();
-                            for (int x = 12; x <= 17; x++) {
-                                // revealing house cards
-                                updateInventoryForStay(houseCards, clicked, clicker, x);
-
-                            }
-                            // end game logic
-                            if (houseScore > 21) {
-                                session.endGame(currentGame,BlackjackGame.Ending.WIN);
-                                player.addWin();
-                            } else if (houseScore > playerScore) {
-                                // house wins
-                                player.addLoss();
-                                session.endGame(currentGame,BlackjackGame.Ending.LOSE);
-                            } else if (playerScore > houseScore) {
-                                // player wins
-                                session.endGame(currentGame,BlackjackGame.Ending.WIN);
-                                player.addWin();
-                            } else if (playerScore == houseScore) {
-                                // tie
-                                session.endGame(currentGame,BlackjackGame.Ending.TIE);
-                            }
-
-                        } else {
-                            currentGame.getNextCard();
-                            currentGame.updateInventoryForHouse();
-                            int playerScore = currentGame.getScoreUnder21(currentGame.getPlayerCards());
-                            houseScore = currentGame.getScoreUnder21(currentGame.getHouseCards());
-
-
-                            if (houseScore >= 17) {
-                                final ArrayList<String> houseCards = currentGame.getHouseCards();
-                                for (int x = 12; x < 17; x++) {
-
-                                    updateInventoryForStay(houseCards, clicked, clicker, x);
-                                }
-                                if (houseScore > 21) {
-                                    // house lose
-                                    session.endGame(currentGame,BlackjackGame.Ending.WIN);
-                                    player.addWin();
-                                } else if (houseScore > playerScore) {
-                                    // house wins
-                                    session.endGame(currentGame,BlackjackGame.Ending.LOSE);
-                                    player.addLoss();
-                                } else if (playerScore > houseScore) {
-                                    // player wins
-                                    session.endGame(currentGame,BlackjackGame.Ending.WIN);
-                                    player.addWin();
-                                } else if (playerScore == houseScore) {
-                                    // tie
-                                    session.endGame(currentGame,BlackjackGame.Ending.TIE);
-                                }
-
-                            } else {
-                                currentGame.getNextCard();
-                                playerScore = currentGame.getScoreUnder21(currentGame.getPlayerCards());
-                                houseScore = currentGame.getScoreUnder21(currentGame.getHouseCards());
-                                currentGame.updateInventoryForHouse();
-
-                                if (houseScore >= 17) {
-                                    final ArrayList<String> houseCards = currentGame.getHouseCards();
-                                    for (int x = 12; x < 17; x++) {
-
-                                        updateInventoryForStay(houseCards, clicked, clicker, x);
-                                    }
-                                    if (houseScore > 21) {
-                                        // house lose
-                                        session.endGame(currentGame,BlackjackGame.Ending.WIN);
-                                        player.addWin();
-                                    } else if (houseScore > playerScore) {
-                                        // house wins
-                                        session.endGame(currentGame,BlackjackGame.Ending.LOSE);
-                                        player.addLoss();
-                                    } else if (playerScore > houseScore) {
-                                        // player wins
-                                        session.endGame(currentGame,BlackjackGame.Ending.WIN);
-                                        player.addWin();
-                                    } else if (playerScore == houseScore) {
-                                        // tie
-                                        session.endGame(currentGame,BlackjackGame.Ending.TIE);
-                                    }
-                                } else {
-                                    currentGame.getNextCard();
-                                    currentGame.updateInventoryForHouse();
-
-                                    playerScore = currentGame.getScoreUnder21(currentGame.getPlayerCards());
-                                    houseScore = currentGame.getScoreUnder21(currentGame.getHouseCards());
-
-                                    if (houseScore >= 17) {
-                                        final ArrayList<String> houseCards = currentGame.getHouseCards();
-                                        for (int x = 12; x < 17; x++) {
-
-                                            updateInventoryForStay(houseCards, clicked, clicker, x);
-                                        }
-                                        if (houseScore > 21) {
-                                            // house lose
-                                            session.endGame(currentGame,BlackjackGame.Ending.WIN);
-                                            player.addWin();
-
-                                        } else if (houseScore > playerScore) {
-                                            // house wins
-                                            session.endGame(currentGame,BlackjackGame.Ending.LOSE);
-                                            player.addLoss();
-                                        } else if (playerScore > houseScore) {
-                                            // player wins
-                                            session.endGame(currentGame,BlackjackGame.Ending.WIN);
-                                            player.addWin();
-
-                                        } else if (playerScore == houseScore) {
-                                            // tie
-                                            session.endGame(currentGame,BlackjackGame.Ending.TIE);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                break;
+            case 22:
+                if (!game.isDoubled()) draw(session, game);
+                break;
+            case 30:
+                double stake = game.getBetAmount();
+                if (game.isDoubled() || game.getPlayerCards().size() != 2 || !plugin.isDoubleDownEnabled()) return;
+                if (!plugin.validStake(stake * 2)
+                        || (!plugin.isDoubleDownOverFlow() && plugin.getPlayerFor(player).getBalance() < stake)
+                        || !plugin.withdraw(stake, player)) {
+                    player.sendMessage(plugin.getString("cannot-bet-that-much"));
+                    return;
                 }
-            }
+                game.doubleStake();
+                draw(session, game);
+                break;
+            case 31:
+                session.endGame(game, game.playDealer());
+                break;
+            case 32:
+                if (!game.isDoubled() && plugin.isSurrenderEnabled()) session.endGame(game, BlackjackGame.Ending.SURRENDER);
+                break;
+            default:
+                break;
+        }
+    }
 
+    private void draw(GameSession session, BlackjackGame game) {
+        game.getNextCard();
+        if (game.getScoreUnder21(game.getPlayerCards()) > 21) {
+            session.endGame(game, BlackjackGame.Ending.LOSE);
+        } else {
+            session.openGame();
+        }
+    }
+
+    private void clickResults(GameSession session, Player player, int slot) {
+        if (slot == 12) {
+            session.endSession();
+        } else if (slot == 14) {
+            session.startNewGame();
+        } else if (plugin.getConfig().getBoolean("enable-change-bet")) {
+            double change;
+            if (slot >= 19 && slot <= 21) {
+                change = -plugin.getConfig().getInt("bet-modifiers.decreaseValue" + (22 - slot));
+            } else if (slot >= 23 && slot <= 25) {
+                change = plugin.getConfig().getInt("bet-modifiers.increaseValue" + (slot - 22));
+            } else {
+                return;
+            }
+            double next = session.getBetAmount() + change;
+            if (!plugin.validStake(next) || next < 1 || next < plugin.getBetMin()
+                    || (plugin.getBetMax() > 0 && next > plugin.getBetMax())
+                    || next > plugin.getPlayerFor(player).getBalance()) return;
+            session.setBetAmount(next);
+            session.showEndMenu(session.latestGame());
         }
     }
 }
