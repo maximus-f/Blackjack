@@ -55,7 +55,6 @@ public class BlackjackGame {
             houseCards.add(card);
         }
         cardsAvailible.remove(random);
-
     }
 
     public RoundResult getSettlement() {

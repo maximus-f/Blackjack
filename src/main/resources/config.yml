@@ -18,6 +18,14 @@ tax-percent: 0.0
 bet-min: 0.0
 bet-max: 0.0
 
+# Announce settled wins and losses to the server.
+# Use $player$ for the player's name and $amount$ for the net profit or loss.
+# Set an individual message to "" to hide it. Ties are silent.
+broadcast-announcements: true
+broadcast-messages:
+  win: "&a$player$ won $amount$ in Blackjack!"
+  loss: "&c$player$ lost $amount$ in Blackjack!"
+
 # Override secondary /bet commands?
 # E.g. Some people have told me they have multiple NPC's with different bet amounts.
 # This poses a problem due to the session system where running /bet 100 and then /bet 200 will pull up the first
