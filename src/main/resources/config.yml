@@ -23,8 +23,8 @@ bet-max: 0.0
 # Set an individual message to "" to hide it. Ties are silent.
 broadcast-announcements: true
 broadcast-messages:
-  win: "&a$player$ won $amount$ in Blackjack!"
-  loss: "&c$player$ lost $amount$ in Blackjack!"
+  win: "&e$player$ won &a$amount$ &ein Blackjack!"
+  loss: "&e$player$ lost &c$amount$ &ein Blackjack!"
 
 # Override secondary /bet commands?
 # E.g. Some people have told me they have multiple NPC's with different bet amounts.
